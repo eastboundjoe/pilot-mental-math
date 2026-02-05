@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { getOverallStats, getCategoryStats, getStreak, getRecentSessions } from '@/lib/storage';
 import { CATEGORY_INFO, ProblemCategory } from '@/lib/problems';
 
@@ -32,7 +33,7 @@ export default function HomePage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-white flex items-center justify-center">
         <div className="animate-pulse">Loading...</div>
       </div>
     );
@@ -42,32 +43,35 @@ export default function HomePage() {
   const totalCategories = Object.keys(CATEGORY_INFO).length;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white">
       {/* Header */}
-      <header className="border-b border-slate-800 p-6">
+      <header className="border-b border-slate-200 dark:border-slate-800 p-6">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Pilot Mental Math</h1>
-            <p className="text-slate-400 text-sm">Daily practice for sharper flying</p>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">Daily practice for sharper flying</p>
           </div>
-          {streak > 0 && (
-            <Badge className="bg-amber-600 text-lg px-3 py-1">
-              {streak} day streak
-            </Badge>
-          )}
+          <div className="flex items-center gap-3">
+            {streak > 0 && (
+              <Badge className="bg-amber-500 dark:bg-amber-600 text-white text-lg px-3 py-1">
+                {streak} day streak
+              </Badge>
+            )}
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto p-6 space-y-8">
         {/* Quick start */}
-        <Card className="bg-gradient-to-br from-emerald-900/50 to-slate-900 border-emerald-800">
+        <Card className="bg-gradient-to-br from-emerald-100 to-white dark:from-emerald-900/50 dark:to-slate-900 border-emerald-300 dark:border-emerald-800">
           <CardContent className="p-8 text-center space-y-4">
             <h2 className="text-2xl font-semibold">Ready to practice?</h2>
-            <p className="text-slate-300">
+            <p className="text-slate-600 dark:text-slate-300">
               30-minute sessions with randomized problems from the book.
             </p>
             <Link href="/practice">
-              <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-lg px-8">
+              <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white text-lg px-8">
                 Start Practice Session
               </Button>
             </Link>
@@ -77,32 +81,32 @@ export default function HomePage() {
         {/* Stats overview */}
         {stats.totalProblems > 0 && (
           <div className="grid md:grid-cols-4 gap-4">
-            <Card className="bg-slate-900 border-slate-800">
+            <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
               <CardContent className="p-4 text-center">
-                <div className="text-3xl font-bold text-blue-400">{stats.totalProblems}</div>
-                <div className="text-sm text-slate-400">Problems Solved</div>
+                <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{stats.totalProblems}</div>
+                <div className="text-sm text-slate-500 dark:text-slate-400">Problems Solved</div>
               </CardContent>
             </Card>
-            <Card className="bg-slate-900 border-slate-800">
+            <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
               <CardContent className="p-4 text-center">
-                <div className={`text-3xl font-bold ${stats.accuracy >= 80 ? 'text-emerald-400' : stats.accuracy >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>
+                <div className={`text-3xl font-bold ${stats.accuracy >= 80 ? 'text-emerald-600 dark:text-emerald-400' : stats.accuracy >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`}>
                   {stats.accuracy}%
                 </div>
-                <div className="text-sm text-slate-400">Overall Accuracy</div>
+                <div className="text-sm text-slate-500 dark:text-slate-400">Overall Accuracy</div>
               </CardContent>
             </Card>
-            <Card className="bg-slate-900 border-slate-800">
+            <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
               <CardContent className="p-4 text-center">
-                <div className="text-3xl font-bold text-purple-400">{stats.avgTime}s</div>
-                <div className="text-sm text-slate-400">Avg Time/Problem</div>
+                <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">{stats.avgTime}s</div>
+                <div className="text-sm text-slate-500 dark:text-slate-400">Avg Time/Problem</div>
               </CardContent>
             </Card>
-            <Card className="bg-slate-900 border-slate-800">
+            <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
               <CardContent className="p-4 text-center">
-                <div className="text-3xl font-bold text-cyan-400">
+                <div className="text-3xl font-bold text-cyan-600 dark:text-cyan-400">
                   {categoriesPracticed}/{totalCategories}
                 </div>
-                <div className="text-sm text-slate-400">Categories Practiced</div>
+                <div className="text-sm text-slate-500 dark:text-slate-400">Categories Practiced</div>
               </CardContent>
             </Card>
           </div>
@@ -110,18 +114,18 @@ export default function HomePage() {
 
         {/* Recent sessions */}
         {recentSessions.length > 0 && (
-          <Card className="bg-slate-900 border-slate-800">
+          <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
             <CardHeader>
               <CardTitle className="text-lg">Recent Sessions</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 {recentSessions.map((session, i) => (
-                  <div key={i} className="flex items-center justify-between bg-slate-800 p-3 rounded">
-                    <span className="text-slate-300">{session.date}</span>
+                  <div key={i} className="flex items-center justify-between bg-slate-100 dark:bg-slate-800 p-3 rounded">
+                    <span className="text-slate-700 dark:text-slate-300">{session.date}</span>
                     <div className="flex items-center gap-4">
-                      <span className="text-slate-400">{session.problems} problems</span>
-                      <span className={session.accuracy >= 80 ? 'text-emerald-400' : session.accuracy >= 60 ? 'text-yellow-400' : 'text-red-400'}>
+                      <span className="text-slate-500 dark:text-slate-400">{session.problems} problems</span>
+                      <span className={session.accuracy >= 80 ? 'text-emerald-600 dark:text-emerald-400' : session.accuracy >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}>
                         {session.accuracy}%
                       </span>
                     </div>
@@ -134,7 +138,7 @@ export default function HomePage() {
 
         {/* Category progress */}
         {Object.keys(categoryStats).length > 0 && (
-          <Card className="bg-slate-900 border-slate-800">
+          <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
             <CardHeader>
               <CardTitle className="text-lg">Category Mastery</CardTitle>
             </CardHeader>
@@ -147,10 +151,10 @@ export default function HomePage() {
                     return (
                       <div key={category} className="space-y-1">
                         <div className="flex justify-between text-sm">
-                          <span className="text-slate-300">
+                          <span className="text-slate-700 dark:text-slate-300">
                             {CATEGORY_INFO[category as ProblemCategory]?.name || category}
                           </span>
-                          <span className={accuracy >= 80 ? 'text-emerald-400' : accuracy >= 60 ? 'text-yellow-400' : 'text-red-400'}>
+                          <span className={accuracy >= 80 ? 'text-emerald-600 dark:text-emerald-400' : accuracy >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}>
                             {accuracy}% ({data.attempted})
                           </span>
                         </div>
@@ -164,15 +168,15 @@ export default function HomePage() {
         )}
 
         {/* Quick reference link */}
-        <Card className="bg-slate-900 border-slate-800">
+        <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-semibold">Formula Reference</h3>
-                <p className="text-sm text-slate-400">Quick reference for all mental math formulas</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Quick reference for all mental math formulas</p>
               </div>
               <Link href="/reference">
-                <Button variant="outline" className="border-slate-600">
+                <Button variant="outline" className="border-slate-300 dark:border-slate-600">
                   View Formulas
                 </Button>
               </Link>
@@ -182,14 +186,14 @@ export default function HomePage() {
 
         {/* Empty state */}
         {stats.totalProblems === 0 && (
-          <div className="text-center py-12 text-slate-400">
+          <div className="text-center py-12 text-slate-500 dark:text-slate-400">
             <p className="text-lg mb-2">No practice data yet</p>
             <p className="text-sm">Start a practice session to track your progress!</p>
           </div>
         )}
       </main>
 
-      <footer className="border-t border-slate-800 p-6 mt-12">
+      <footer className="border-t border-slate-200 dark:border-slate-800 p-6 mt-12">
         <div className="max-w-4xl mx-auto text-center text-slate-500 text-sm">
           Based on &quot;Mental Math for Pilots&quot; by Ronald D. McElroy
         </div>

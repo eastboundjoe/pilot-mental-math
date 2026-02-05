@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ThemeToggle } from '@/components/theme-toggle';
 import {
   generateProblem,
   checkAnswer,
@@ -16,7 +16,7 @@ import {
   CATEGORY_INFO,
   getAllCategories,
 } from '@/lib/problems';
-import { saveResult, saveSession, updateStreak, getCategoryStats, SessionStats } from '@/lib/storage';
+import { saveResult, saveSession, updateStreak, SessionStats } from '@/lib/storage';
 import Link from 'next/link';
 
 const SESSION_DURATION = 30 * 60; // 30 minutes in seconds
@@ -169,23 +169,26 @@ export default function PracticePage() {
   // Not started yet
   if (!isRunning && !showSummary) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white p-8">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white p-8">
         <div className="max-w-2xl mx-auto">
-          <Link href="/" className="text-slate-400 hover:text-white mb-8 inline-block">
-            ← Back to Home
-          </Link>
+          <div className="flex items-center justify-between mb-8">
+            <Link href="/" className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+              ← Back to Home
+            </Link>
+            <ThemeToggle />
+          </div>
 
-          <Card className="bg-slate-900 border-slate-800">
+          <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
             <CardHeader>
               <CardTitle className="text-2xl text-center">Start Practice Session</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <label className="text-sm text-slate-400 mb-2 block">Focus Category (optional)</label>
+                <label className="text-sm text-slate-500 dark:text-slate-400 mb-2 block">Focus Category (optional)</label>
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value as ProblemCategory | 'all')}
-                  className="w-full bg-slate-800 border-slate-700 rounded-md p-2 text-white"
+                  className="w-full bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 rounded-md p-2 text-slate-900 dark:text-white"
                 >
                   <option value="all">All Categories (Random Mix)</option>
                   {getAllCategories().map((cat) => (
@@ -197,7 +200,7 @@ export default function PracticePage() {
               </div>
 
               <div className="text-center space-y-4">
-                <p className="text-slate-400">
+                <p className="text-slate-500 dark:text-slate-400">
                   30-minute session with randomized problems.
                   <br />
                   Focus on accuracy first, speed will follow.
@@ -205,7 +208,7 @@ export default function PracticePage() {
                 <Button
                   onClick={startSession}
                   size="lg"
-                  className="bg-emerald-600 hover:bg-emerald-700 text-lg px-8"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-lg px-8"
                 >
                   Start Session
                 </Button>
@@ -224,27 +227,30 @@ export default function PracticePage() {
     const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
 
     return (
-      <div className="min-h-screen bg-slate-950 text-white p-8">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white p-8">
         <div className="max-w-2xl mx-auto">
-          <Card className="bg-slate-900 border-slate-800">
+          <div className="flex justify-end mb-4">
+            <ThemeToggle />
+          </div>
+          <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
             <CardHeader>
               <CardTitle className="text-2xl text-center">Session Complete!</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-3 gap-4 text-center">
-                <div className="bg-slate-800 rounded-lg p-4">
-                  <div className="text-3xl font-bold text-emerald-400">{total}</div>
-                  <div className="text-sm text-slate-400">Problems</div>
+                <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-4">
+                  <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{total}</div>
+                  <div className="text-sm text-slate-500 dark:text-slate-400">Problems</div>
                 </div>
-                <div className="bg-slate-800 rounded-lg p-4">
-                  <div className="text-3xl font-bold text-blue-400">{correct}</div>
-                  <div className="text-sm text-slate-400">Correct</div>
+                <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-4">
+                  <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{correct}</div>
+                  <div className="text-sm text-slate-500 dark:text-slate-400">Correct</div>
                 </div>
-                <div className="bg-slate-800 rounded-lg p-4">
-                  <div className={`text-3xl font-bold ${accuracy >= 80 ? 'text-emerald-400' : accuracy >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>
+                <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-4">
+                  <div className={`text-3xl font-bold ${accuracy >= 80 ? 'text-emerald-600 dark:text-emerald-400' : accuracy >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`}>
                     {accuracy}%
                   </div>
-                  <div className="text-sm text-slate-400">Accuracy</div>
+                  <div className="text-sm text-slate-500 dark:text-slate-400">Accuracy</div>
                 </div>
               </div>
 
@@ -260,9 +266,9 @@ export default function PracticePage() {
                         return acc;
                       }, {} as Record<string, { correct: number; total: number }>)
                     ).map(([cat, stats]) => (
-                      <div key={cat} className="flex justify-between text-sm bg-slate-800 px-3 py-2 rounded">
+                      <div key={cat} className="flex justify-between text-sm bg-slate-100 dark:bg-slate-800 px-3 py-2 rounded">
                         <span>{CATEGORY_INFO[cat as ProblemCategory]?.name || cat}</span>
-                        <span className={stats.correct === stats.total ? 'text-emerald-400' : 'text-slate-300'}>
+                        <span className={stats.correct === stats.total ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'}>
                           {stats.correct}/{stats.total}
                         </span>
                       </div>
@@ -277,12 +283,12 @@ export default function PracticePage() {
                     setShowSummary(false);
                     startSession();
                   }}
-                  className="bg-emerald-600 hover:bg-emerald-700"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
                 >
                   Practice Again
                 </Button>
                 <Link href="/">
-                  <Button variant="outline" className="border-slate-600">
+                  <Button variant="outline" className="border-slate-300 dark:border-slate-600">
                     Back to Home
                   </Button>
                 </Link>
@@ -296,33 +302,34 @@ export default function PracticePage() {
 
   // Active session
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-4 md:p-8">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white p-4 md:p-8">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Timer and stats bar */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className={`text-2xl font-mono font-bold ${timeRemaining < 60 ? 'text-red-400' : 'text-white'}`}>
+            <div className={`text-2xl font-mono font-bold ${timeRemaining < 60 ? 'text-red-600 dark:text-red-400' : ''}`}>
               {formatTime(timeRemaining)}
             </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsPaused(!isPaused)}
-              className="text-slate-400"
+              className="text-slate-500 dark:text-slate-400"
             >
               {isPaused ? '▶ Resume' : '⏸ Pause'}
             </Button>
           </div>
           <div className="flex items-center gap-4">
-            <Badge variant="outline" className="text-slate-300">
+            <Badge variant="outline" className="text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600">
               {sessionResults.length} answered
             </Badge>
             <Badge
               variant="outline"
-              className={currentAccuracy >= 80 ? 'text-emerald-400' : currentAccuracy >= 60 ? 'text-yellow-400' : 'text-red-400'}
+              className={`border-slate-300 dark:border-slate-600 ${currentAccuracy >= 80 ? 'text-emerald-600 dark:text-emerald-400' : currentAccuracy >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`}
             >
               {currentAccuracy}% accuracy
             </Badge>
+            <ThemeToggle />
           </div>
         </div>
 
@@ -330,11 +337,11 @@ export default function PracticePage() {
 
         {/* Paused overlay */}
         {isPaused && (
-          <div className="fixed inset-0 bg-slate-950/90 flex items-center justify-center z-50">
-            <Card className="bg-slate-900 border-slate-800 p-8 text-center">
+          <div className="fixed inset-0 bg-white/90 dark:bg-slate-950/90 flex items-center justify-center z-50">
+            <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 p-8 text-center">
               <h2 className="text-2xl font-bold mb-4">Session Paused</h2>
               <div className="flex gap-4">
-                <Button onClick={() => setIsPaused(false)} className="bg-emerald-600">
+                <Button onClick={() => setIsPaused(false)} className="bg-emerald-600 text-white">
                   Resume
                 </Button>
                 <Button variant="destructive" onClick={endSession}>
@@ -347,10 +354,10 @@ export default function PracticePage() {
 
         {/* Problem card */}
         {currentProblem && (
-          <Card className="bg-slate-900 border-slate-800">
+          <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <Badge className="bg-slate-700">
+                <Badge className="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
                   {CATEGORY_INFO[currentProblem.category].name}
                 </Badge>
                 {currentProblem.hint && !showHint && !showResult && (
@@ -358,7 +365,7 @@ export default function PracticePage() {
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowHint(true)}
-                    className="text-slate-400 text-sm"
+                    className="text-slate-500 dark:text-slate-400 text-sm"
                   >
                     Show Hint
                   </Button>
@@ -371,8 +378,8 @@ export default function PracticePage() {
               </div>
 
               {showHint && currentProblem.hint && !showResult && (
-                <div className="text-sm text-slate-400 text-center bg-slate-800 p-3 rounded">
-                  💡 {currentProblem.hint}
+                <div className="text-sm text-slate-600 dark:text-slate-400 text-center bg-slate-100 dark:bg-slate-800 p-3 rounded">
+                  {currentProblem.hint}
                 </div>
               )}
 
@@ -386,27 +393,27 @@ export default function PracticePage() {
                   onKeyDown={handleKeyDown}
                   disabled={showResult}
                   placeholder="Your answer"
-                  className="w-40 text-center text-xl bg-slate-800 border-slate-700"
+                  className="w-40 text-center text-xl bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700"
                 />
-                <span className="text-slate-400">{currentProblem.unit}</span>
+                <span className="text-slate-500 dark:text-slate-400">{currentProblem.unit}</span>
               </div>
 
               {!showResult ? (
                 <Button
                   onClick={submitAnswer}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                   disabled={!userAnswer}
                 >
                   Submit Answer
                 </Button>
               ) : (
                 <div className="space-y-4">
-                  <div className={`text-center p-4 rounded-lg ${isCorrect ? 'bg-emerald-900/50 text-emerald-400' : 'bg-red-900/50 text-red-400'}`}>
+                  <div className={`text-center p-4 rounded-lg ${isCorrect ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400' : 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-400'}`}>
                     {isCorrect ? (
-                      <span className="text-xl">✓ Correct!</span>
+                      <span className="text-xl">Correct!</span>
                     ) : (
                       <span className="text-xl">
-                        ✗ Incorrect. Answer: {currentProblem.correctAnswer} {currentProblem.unit}
+                        Incorrect. Answer: {currentProblem.correctAnswer} {currentProblem.unit}
                       </span>
                     )}
                   </div>
@@ -415,16 +422,16 @@ export default function PracticePage() {
                     <Button
                       variant="outline"
                       onClick={() => setShowExplanation(true)}
-                      className="w-full border-slate-600"
+                      className="w-full border-slate-300 dark:border-slate-600"
                     >
                       Show Explanation
                     </Button>
                   )}
 
                   {showExplanation && (
-                    <div className="bg-slate-800 p-4 rounded-lg">
-                      <div className="text-sm text-slate-400 mb-2">Explanation:</div>
-                      <div className="text-slate-200">{currentProblem.explanation}</div>
+                    <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg">
+                      <div className="text-sm text-slate-500 dark:text-slate-400 mb-2">Explanation:</div>
+                      <div className="text-slate-800 dark:text-slate-200">{currentProblem.explanation}</div>
                       <div className="text-xs text-slate-500 mt-2">
                         Formula: {CATEGORY_INFO[currentProblem.category].formula}
                       </div>
@@ -433,9 +440,9 @@ export default function PracticePage() {
 
                   <Button
                     onClick={loadNextProblem}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
                   >
-                    Next Problem →
+                    Next Problem
                   </Button>
                 </div>
               )}
@@ -447,7 +454,7 @@ export default function PracticePage() {
           <Button
             variant="ghost"
             onClick={endSession}
-            className="text-slate-500 hover:text-slate-300"
+            className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
           >
             End Session Early
           </Button>
