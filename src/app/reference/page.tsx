@@ -1,13 +1,26 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { CATEGORY_INFO, ProblemCategory, getAllCategories } from '@/lib/problems';
+import { CATEGORY_INFO, ProblemCategory } from '@/lib/problems';
 
 export default function ReferencePage() {
-  const categories = getAllCategories();
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+  const toggleExample = (catId: string) => {
+    setExpandedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(catId)) {
+        next.delete(catId);
+      } else {
+        next.add(catId);
+      }
+      return next;
+    });
+  };
 
   const groupedCategories = {
     'Navigation & Heading': ['reciprocal-heading', 'magnetic-compass', 'drift-angle', 'sixty-to-one'],
@@ -51,6 +64,7 @@ export default function ReferencePage() {
                 {categoryIds.map((catId) => {
                   const info = CATEGORY_INFO[catId as ProblemCategory];
                   if (!info) return null;
+                  const isExpanded = expandedCategories.has(catId);
                   return (
                     <Card key={catId} className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
                       <CardHeader className="pb-2">
@@ -58,9 +72,74 @@ export default function ReferencePage() {
                       </CardHeader>
                       <CardContent>
                         <p className="text-slate-500 dark:text-slate-400 text-sm mb-3">{info.description}</p>
-                        <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded font-mono text-sm text-emerald-700 dark:text-emerald-400">
+                        <div className="bg-slate-100 dark:bg-slate-800 p-3 rounded font-mono text-sm text-emerald-700 dark:text-emerald-400 mb-3">
                           {info.formula}
                         </div>
+
+                        {/* Show Example Button */}
+                        <button
+                          onClick={() => toggleExample(catId)}
+                          className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={2}
+                            stroke="currentColor"
+                            className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                          </svg>
+                          {isExpanded ? 'Hide Example' : 'Show Step-by-Step Example'}
+                        </button>
+
+                        {/* Expanded Example */}
+                        {isExpanded && info.example && (
+                          <div className="mt-4 border-t border-slate-200 dark:border-slate-700 pt-4">
+                            {/* Problem */}
+                            <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
+                              <div className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-1">Problem</div>
+                              <div className="text-slate-800 dark:text-slate-200 font-medium">{info.example.problem}</div>
+                            </div>
+
+                            {/* Steps */}
+                            <div className="space-y-3 mb-4">
+                              {info.example.steps.map((step, index) => (
+                                <div key={index} className="flex gap-3">
+                                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 flex items-center justify-center text-sm font-bold">
+                                    {index + 1}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="font-mono text-slate-900 dark:text-white font-medium">{step.step}</div>
+                                    <div className="text-slate-500 dark:text-slate-400 text-sm">{step.explanation}</div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Answer */}
+                            <div className="bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-lg p-3 mb-3">
+                              <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide mb-1">Answer</div>
+                              <div className="text-emerald-800 dark:text-emerald-200 font-bold text-lg">{info.example.answer}</div>
+                            </div>
+
+                            {/* Tip */}
+                            {info.example.tip && (
+                              <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                                <div className="flex items-start gap-2">
+                                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-amber-500 dark:text-amber-400 flex-shrink-0 mt-0.5">
+                                    <path fillRule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5z" clipRule="evenodd" />
+                                  </svg>
+                                  <div>
+                                    <div className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-1">Pro Tip</div>
+                                    <div className="text-amber-800 dark:text-amber-200 text-sm">{info.example.tip}</div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   );
