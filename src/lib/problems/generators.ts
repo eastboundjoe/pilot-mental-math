@@ -1,0 +1,700 @@
+import { Problem, ProblemCategory, CATEGORY_INFO } from './types';
+
+// Helper to generate unique IDs
+const generateId = () => Math.random().toString(36).substring(2, 9);
+
+// Helper to get random int in range
+const randInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+// Helper to pick random item from array
+const pick = <T>(arr: readonly T[]): T => arr[Math.floor(Math.random() * arr.length)];
+
+// ============================================
+// PROBLEM GENERATORS
+// ============================================
+
+function generateHoursToDecimal(): Problem {
+  const hours = randInt(0, 5);
+  const minutes = pick([0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48, 51, 54, 57]);
+  const decimalHours = hours + minutes / 60;
+
+  return {
+    id: generateId(),
+    category: 'hours-to-decimal',
+    question: `Convert ${hours}:${minutes.toString().padStart(2, '0')} to decimal hours`,
+    correctAnswer: Math.round(decimalHours * 100) / 100,
+    tolerance: 0.01,
+    unit: 'hours',
+    hint: 'Every 6 minutes = 0.1 hour',
+    explanation: `${hours}:${minutes.toString().padStart(2, '0')} = ${hours} + (${minutes}/60) = ${decimalHours.toFixed(2)} hours`
+  };
+}
+
+function generateReciprocalHeading(): Problem {
+  const heading = randInt(1, 360);
+  let reciprocal: number;
+
+  if (heading <= 180) {
+    reciprocal = heading + 180;
+  } else {
+    reciprocal = heading - 180;
+  }
+
+  return {
+    id: generateId(),
+    category: 'reciprocal-heading',
+    question: `What is the reciprocal of heading ${heading.toString().padStart(3, '0')}°?`,
+    correctAnswer: reciprocal,
+    tolerance: 0,
+    unit: '°',
+    hint: 'Add 200, subtract 20 (or vice versa)',
+    explanation: heading <= 180
+      ? `${heading}° + 200 - 20 = ${reciprocal}°`
+      : `${heading}° - 200 + 20 = ${reciprocal}°`
+  };
+}
+
+function generateHydroplaning(): Problem {
+  const tirePressures = [50, 80, 100, 120, 144, 150, 169, 180, 196, 200, 225];
+  const pressure = pick(tirePressures);
+  const speed = 9 * Math.sqrt(pressure);
+
+  return {
+    id: generateId(),
+    category: 'hydroplaning',
+    question: `Main tire pressure is ${pressure} psi. What is the hydroplaning speed?`,
+    correctAnswer: Math.round(speed),
+    tolerance: 2,
+    unit: 'knots',
+    hint: 'V = 9 × √(tire pressure)',
+    explanation: `V = 9 × √${pressure} = 9 × ${Math.sqrt(pressure).toFixed(1)} = ${Math.round(speed)} knots`
+  };
+}
+
+function generateTempConversion(): Problem {
+  const toFahrenheit = Math.random() > 0.5;
+
+  if (toFahrenheit) {
+    const celsius = pick([-40, -30, -20, -10, 0, 5, 10, 15, 20, 25, 30, 35, 40]);
+    const fahrenheit = (celsius * 9/5) + 32;
+
+    return {
+      id: generateId(),
+      category: 'temp-conversion',
+      question: `Convert ${celsius}°C to Fahrenheit`,
+      correctAnswer: Math.round(fahrenheit),
+      tolerance: 2,
+      unit: '°F',
+      hint: 'Double it, subtract 10%, add 32',
+      explanation: `${celsius}°C × 2 = ${celsius * 2}, -10% = ${celsius * 2 * 0.9}, +32 = ${Math.round(fahrenheit)}°F`
+    };
+  } else {
+    const fahrenheit = pick([14, 32, 41, 50, 59, 68, 77, 86, 95, 104]);
+    const celsius = (fahrenheit - 32) * 5/9;
+
+    return {
+      id: generateId(),
+      category: 'temp-conversion',
+      question: `Convert ${fahrenheit}°F to Celsius`,
+      correctAnswer: Math.round(celsius),
+      tolerance: 2,
+      unit: '°C',
+      hint: 'Subtract 32, add 10%, divide by 2',
+      explanation: `(${fahrenheit}°F - 32) × 5/9 = ${Math.round(celsius)}°C`
+    };
+  }
+}
+
+function generateISADeviation(): Problem {
+  const altitudes = [5000, 8000, 10000, 15000, 18000, 21000, 25000, 30000, 35000];
+  const altitude = pick(altitudes);
+  const isaTemp = 15 - (altitude / 1000) * 2;
+  const actualTemp = isaTemp + randInt(-20, 20);
+  const deviation = actualTemp - isaTemp;
+
+  const questionType = Math.random() > 0.5 ? 'isa' : 'deviation';
+
+  if (questionType === 'isa') {
+    return {
+      id: generateId(),
+      category: 'isa-deviation',
+      question: `What is the ISA temperature at ${altitude.toLocaleString()} feet MSL?`,
+      correctAnswer: isaTemp,
+      tolerance: 0,
+      unit: '°C',
+      hint: 'ISA = 15°C - (altitude in 1000s × 2)',
+      explanation: `ISA = 15 - (${altitude/1000} × 2) = 15 - ${(altitude/1000)*2} = ${isaTemp}°C`
+    };
+  } else {
+    return {
+      id: generateId(),
+      category: 'isa-deviation',
+      question: `At ${altitude.toLocaleString()} feet, OAT is ${actualTemp}°C. What is the ISA deviation?`,
+      correctAnswer: deviation,
+      tolerance: 0,
+      unit: '°C',
+      hint: 'First find ISA temp, then: Deviation = Actual - ISA',
+      explanation: `ISA at ${altitude/1000}K = ${isaTemp}°C. Deviation = ${actualTemp} - ${isaTemp} = ${deviation > 0 ? '+' : ''}${deviation}°C`
+    };
+  }
+}
+
+function generatePressureAltitude(): Problem {
+  const altimeterSettings = [29.42, 29.52, 29.62, 29.72, 29.82, 29.92, 30.02, 30.12, 30.22, 30.32, 30.42, 30.52];
+  const setting = pick(altimeterSettings);
+  const fieldElevation = pick([0, 250, 500, 750, 1000, 1500, 2000, 3000, 4000, 5000]);
+
+  const difference = 29.92 - setting;
+  const correction = difference * 1000; // 10 feet per 0.01 inHg
+  const pressureAlt = fieldElevation + correction;
+
+  return {
+    id: generateId(),
+    category: 'pressure-altitude',
+    question: `Field elevation is ${fieldElevation.toLocaleString()} ft, altimeter setting is ${setting.toFixed(2)}" Hg. What is the pressure altitude?`,
+    correctAnswer: Math.round(pressureAlt),
+    tolerance: 20,
+    unit: 'feet',
+    hint: '10 feet per 0.01" from 29.92',
+    explanation: `Difference from 29.92: ${(difference).toFixed(2)}" = ${Math.round(correction)} ft. PA = ${fieldElevation} + ${Math.round(correction)} = ${Math.round(pressureAlt)} ft`
+  };
+}
+
+function generateCrosswind(): Problem {
+  const windSpeeds = [10, 12, 15, 18, 20, 22, 25, 28, 30, 35];
+  const windSpeed = pick(windSpeeds);
+  const angles = [15, 20, 30, 40, 45, 50, 60, 70, 75, 90];
+  const angle = pick(angles);
+
+  // Using sine for exact crosswind, but book uses approximations
+  const crosswind = windSpeed * Math.sin(angle * Math.PI / 180);
+
+  // Round to reasonable precision
+  const roundedCrosswind = Math.round(crosswind);
+
+  return {
+    id: generateId(),
+    category: 'crosswind',
+    question: `Wind is ${windSpeed} knots at ${angle}° off the runway. What is the crosswind component?`,
+    correctAnswer: roundedCrosswind,
+    tolerance: 2,
+    unit: 'knots',
+    hint: '30°=50%, 45°=70%, 60°=90%, 90°=100%',
+    explanation: `At ${angle}° angle: crosswind ≈ ${roundedCrosswind} knots (${Math.round(crosswind/windSpeed*100)}% of ${windSpeed} kts)`
+  };
+}
+
+function generateHeadwindTailwind(): Problem {
+  const windSpeeds = [10, 15, 20, 25, 30, 35, 40];
+  const windSpeed = pick(windSpeeds);
+  const angles = [0, 15, 20, 30, 40, 45, 50, 60];
+  const angle = pick(angles);
+  const isHeadwind = Math.random() > 0.5;
+
+  const component = windSpeed * Math.cos(angle * Math.PI / 180);
+
+  return {
+    id: generateId(),
+    category: 'headwind-tailwind',
+    question: `Wind is ${windSpeed} knots at ${angle}° off the runway. What is the ${isHeadwind ? 'headwind' : 'tailwind'} component?`,
+    correctAnswer: Math.round(component),
+    tolerance: 2,
+    unit: 'knots',
+    hint: '0°=100%, 30°=90%, 45°=70%, 60°=50%',
+    explanation: `At ${angle}° angle: ${isHeadwind ? 'headwind' : 'tailwind'} ≈ ${Math.round(component)} knots (${Math.round(component/windSpeed*100)}% of ${windSpeed} kts)`
+  };
+}
+
+function generateDriftAngle(): Problem {
+  const tasOptions = [90, 120, 150, 180, 240, 300, 360, 420, 480];
+  const tas = pick(tasOptions);
+  const crosswindOptions = [6, 8, 10, 12, 15, 18, 20, 24, 30, 36, 40, 48];
+  const crosswind = pick(crosswindOptions.filter(c => c <= tas / 4)); // Keep drift reasonable
+
+  const drift = (crosswind * 60) / tas;
+
+  return {
+    id: generateId(),
+    category: 'drift-angle',
+    question: `At ${tas} KTAS with a ${crosswind}-knot crosswind, what is your drift angle?`,
+    correctAnswer: Math.round(drift),
+    tolerance: 1,
+    unit: '°',
+    hint: 'Drift = (Crosswind × 60) ÷ TAS',
+    explanation: `Drift = (${crosswind} × 60) ÷ ${tas} = ${(crosswind * 60)} ÷ ${tas} = ${drift.toFixed(1)}°`
+  };
+}
+
+function generateUnitConversion(): Problem {
+  const conversionTypes = ['nm-to-sm', 'sm-to-nm', 'knots-to-mph', 'mph-to-knots', 'knots-to-nm-min'];
+  const type = pick(conversionTypes);
+
+  switch (type) {
+    case 'nm-to-sm': {
+      const nm = pick([50, 75, 100, 150, 200, 250, 300]);
+      const sm = nm * 1.15;
+      return {
+        id: generateId(),
+        category: 'unit-conversion',
+        question: `Convert ${nm} nautical miles to statute miles`,
+        correctAnswer: Math.round(sm),
+        tolerance: 3,
+        unit: 'SM',
+        hint: '1 NM = 1.15 SM',
+        explanation: `${nm} NM × 1.15 = ${Math.round(sm)} SM`
+      };
+    }
+    case 'sm-to-nm': {
+      const sm = pick([50, 75, 100, 150, 200, 250, 300]);
+      const nm = sm / 1.15;
+      return {
+        id: generateId(),
+        category: 'unit-conversion',
+        question: `Convert ${sm} statute miles to nautical miles`,
+        correctAnswer: Math.round(nm),
+        tolerance: 3,
+        unit: 'NM',
+        hint: '1 SM = 0.87 NM',
+        explanation: `${sm} SM ÷ 1.15 = ${Math.round(nm)} NM`
+      };
+    }
+    case 'knots-to-mph': {
+      const knots = pick([100, 150, 200, 250, 300, 350, 400]);
+      const mph = knots * 1.15;
+      return {
+        id: generateId(),
+        category: 'unit-conversion',
+        question: `Convert ${knots} knots to miles per hour`,
+        correctAnswer: Math.round(mph),
+        tolerance: 5,
+        unit: 'MPH',
+        hint: '1 knot = 1.15 MPH',
+        explanation: `${knots} knots × 1.15 = ${Math.round(mph)} MPH`
+      };
+    }
+    case 'mph-to-knots': {
+      const mph = pick([100, 150, 200, 250, 300, 350, 400]);
+      const knots = mph / 1.15;
+      return {
+        id: generateId(),
+        category: 'unit-conversion',
+        question: `Convert ${mph} MPH to knots`,
+        correctAnswer: Math.round(knots),
+        tolerance: 5,
+        unit: 'knots',
+        hint: '1 MPH = 0.87 knots',
+        explanation: `${mph} MPH ÷ 1.15 = ${Math.round(knots)} knots`
+      };
+    }
+    default: {
+      const knots = pick([60, 90, 120, 180, 240, 300, 360, 420, 480]);
+      const nmPerMin = knots / 60;
+      return {
+        id: generateId(),
+        category: 'unit-conversion',
+        question: `At ${knots} knots, how many nautical miles per minute?`,
+        correctAnswer: nmPerMin,
+        tolerance: 0.1,
+        unit: 'NM/min',
+        hint: '60 knots = 1 NM/min',
+        explanation: `${knots} knots ÷ 60 = ${nmPerMin} NM/min`
+      };
+    }
+  }
+}
+
+function generateVisibilityRVR(): Problem {
+  const visibilities: [number, string, number][] = [
+    [0.25, '1/4', 1600],
+    [0.5, '1/2', 2400],
+    [0.75, '3/4', 4000],
+    [1, '1', 5000],
+    [1.5, '1 1/2', 6000]
+  ];
+
+  const [vis, visString, rvr] = pick(visibilities);
+
+  return {
+    id: generateId(),
+    category: 'visibility-rvr',
+    question: `What is the RVR equivalent of ${visString} statute mile visibility?`,
+    correctAnswer: rvr,
+    tolerance: 0,
+    unit: 'feet',
+    hint: '1/4=1600, 1/2=2400, 3/4=4000, 1=5000, 1.5=6000',
+    explanation: `${visString} SM = ${rvr} feet RVR`
+  };
+}
+
+function generateFuelWeight(): Problem {
+  const fuelTypes = ['avgas', 'jetA'] as const;
+  const fuelType = pick(fuelTypes);
+  const toWeight = Math.random() > 0.5;
+
+  const lbsPerGal = fuelType === 'avgas' ? 6.0 : 6.7;
+  const fuelName = fuelType === 'avgas' ? 'Avgas' : 'Jet A';
+
+  if (toWeight) {
+    const gallons = pick([50, 75, 100, 150, 200, 250, 300, 400, 500]);
+    const pounds = gallons * lbsPerGal;
+    return {
+      id: generateId(),
+      category: 'fuel-weight',
+      question: `How many pounds is ${gallons} gallons of ${fuelName}?`,
+      correctAnswer: Math.round(pounds),
+      tolerance: 10,
+      unit: 'lbs',
+      hint: `${fuelName}: ${lbsPerGal} lbs/gal`,
+      explanation: `${gallons} gal × ${lbsPerGal} lbs/gal = ${Math.round(pounds)} lbs`
+    };
+  } else {
+    const pounds = pick([300, 500, 750, 1000, 1500, 2000, 3000, 5000]);
+    const gallons = pounds / lbsPerGal;
+    return {
+      id: generateId(),
+      category: 'fuel-weight',
+      question: `How many gallons is ${pounds.toLocaleString()} lbs of ${fuelName}?`,
+      correctAnswer: Math.round(gallons),
+      tolerance: 5,
+      unit: 'gallons',
+      hint: `${fuelName}: ${lbsPerGal} lbs/gal`,
+      explanation: `${pounds} lbs ÷ ${lbsPerGal} lbs/gal = ${Math.round(gallons)} gallons`
+    };
+  }
+}
+
+function generateFuelDumping(): Problem {
+  const dumpRates = [1200, 1500, 2000, 2200, 2500, 3000];
+  const dumpRate = pick(dumpRates);
+  const solveFor = pick(['time', 'fuel'] as const);
+
+  if (solveFor === 'time') {
+    const fuelMultipliers = [3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 18, 20];
+    const time = pick(fuelMultipliers);
+    const fuel = dumpRate * time;
+
+    return {
+      id: generateId(),
+      category: 'fuel-dumping',
+      question: `Dump rate is ${dumpRate.toLocaleString()} lbs/min. How long to dump ${fuel.toLocaleString()} lbs?`,
+      correctAnswer: time,
+      tolerance: 0.5,
+      unit: 'minutes',
+      hint: 'Time = Fuel ÷ Rate',
+      explanation: `${fuel.toLocaleString()} lbs ÷ ${dumpRate.toLocaleString()} lbs/min = ${time} minutes`
+    };
+  } else {
+    const times = [5, 6, 7, 8, 10, 12, 15];
+    const time = pick(times);
+    const fuel = dumpRate * time;
+
+    return {
+      id: generateId(),
+      category: 'fuel-dumping',
+      question: `Dump rate is ${dumpRate.toLocaleString()} lbs/min. How much fuel dumped in ${time} minutes?`,
+      correctAnswer: fuel,
+      tolerance: 100,
+      unit: 'lbs',
+      hint: 'Fuel = Rate × Time',
+      explanation: `${dumpRate.toLocaleString()} lbs/min × ${time} min = ${fuel.toLocaleString()} lbs`
+    };
+  }
+}
+
+function generateMagneticCompass(): Problem {
+  const startHeadings = [90, 180, 270, 360];
+  const startHeading = pick(startHeadings);
+  const bankAngles = [15, 20, 25];
+  const bankAngle = pick(bankAngles);
+  const latitudes = [30, 35, 40, 45];
+  const latitude = pick(latitudes);
+
+  const directions: ('north' | 'south')[] = ['north', 'south'];
+  const turningTo = pick(directions);
+  const turnDirections = ['left', 'right'] as const;
+  const turnDirection = pick(turnDirections);
+
+  // Normal lead point is bank/3
+  const normalLead = Math.round(bankAngle / 3);
+  // For north, undershoot (start rollout early)
+  // For south, overshoot (start rollout late)
+
+  let desiredHeading: number;
+  if (turningTo === 'north') {
+    desiredHeading = pick([350, 355, 360, 5, 10, 15]);
+    if (desiredHeading === 360) desiredHeading = 360;
+  } else {
+    desiredHeading = pick([165, 170, 175, 180, 185, 190, 195]);
+  }
+
+  // Lead point calculation with latitude correction
+  const totalLead = normalLead + latitude;
+  let rolloutHeading: number;
+
+  if (turningTo === 'north') {
+    // Undershoot north - roll out early (before the heading)
+    rolloutHeading = desiredHeading - totalLead;
+    if (rolloutHeading <= 0) rolloutHeading += 360;
+  } else {
+    // Overshoot south - roll out late (after the heading)
+    rolloutHeading = desiredHeading + totalLead;
+    if (rolloutHeading > 360) rolloutHeading -= 360;
+  }
+
+  return {
+    id: generateId(),
+    category: 'magnetic-compass',
+    question: `Using magnetic compass only at ${latitude}°N, turning ${turnDirection} to ${desiredHeading === 360 ? '360' : desiredHeading}° with ${bankAngle}° bank. At what compass reading do you start rollout?`,
+    correctAnswer: Math.round(rolloutHeading),
+    tolerance: 3,
+    unit: '°',
+    hint: 'UNOS: Undershoot North, Overshoot South. Lead = (bank÷3) + latitude',
+    explanation: `Lead = ${normalLead}° + ${latitude}° latitude = ${totalLead}°. ${turningTo === 'north' ? 'Undershoot' : 'Overshoot'}: ${desiredHeading}° ${turningTo === 'north' ? '-' : '+'} ${totalLead}° = ${Math.round(rolloutHeading)}°`
+  };
+}
+
+function generateSixtyToOne(): Problem {
+  const dmes = [10, 12, 15, 20, 30, 45, 60];
+  const dme = pick(dmes);
+  const questionType = pick(['radials-per-mile', 'arc-distance'] as const);
+
+  if (questionType === 'radials-per-mile') {
+    const radialsPerMile = 60 / dme;
+    return {
+      id: generateId(),
+      category: 'sixty-to-one',
+      question: `At ${dme} DME, how many radials per nautical mile?`,
+      correctAnswer: radialsPerMile,
+      tolerance: 0.5,
+      unit: 'radials/NM',
+      hint: 'Radials per mile = 60 ÷ DME',
+      explanation: `60 ÷ ${dme} = ${radialsPerMile} radials per NM`
+    };
+  } else {
+    const radialsCrossed = pick([20, 24, 30, 36, 40, 45, 50, 60]);
+    const arcDistance = radialsCrossed / (60 / dme);
+    return {
+      id: generateId(),
+      category: 'sixty-to-one',
+      question: `Flying a ${dme} NM arc, crossing ${radialsCrossed} radials. What is the arc distance?`,
+      correctAnswer: Math.round(arcDistance * 10) / 10,
+      tolerance: 0.5,
+      unit: 'NM',
+      hint: 'Arc distance = Radials ÷ (60 ÷ DME)',
+      explanation: `Radials per NM = ${60/dme}. Arc = ${radialsCrossed} ÷ ${60/dme} = ${arcDistance.toFixed(1)} NM`
+    };
+  }
+}
+
+function generateStandardRateTurn(): Problem {
+  const tasOptions = [90, 100, 120, 150, 180, 200, 240, 280];
+  const tas = pick(tasOptions);
+  const bankAngle = Math.min(30, (tas / 10) * 1.5);
+
+  return {
+    id: generateId(),
+    category: 'standard-rate-turn',
+    question: `What bank angle for a standard rate turn at ${tas} KTAS?`,
+    correctAnswer: Math.round(bankAngle),
+    tolerance: 1,
+    unit: '°',
+    hint: 'Bank = (TAS ÷ 10) × 1.5, max 30° IFR',
+    explanation: `(${tas} ÷ 10) × 1.5 = ${((tas/10)*1.5).toFixed(1)}°${bankAngle === 30 ? ' → limited to 30° for IFR' : ''}`
+  };
+}
+
+function generateTurnRadius(): Problem {
+  const tasOptions = [90, 100, 120, 150, 180, 200, 240];
+  const tas = pick(tasOptions);
+  const radius = tas / 200;
+
+  return {
+    id: generateId(),
+    category: 'turn-radius',
+    question: `At ${tas} KTAS in a standard rate turn, what is the turn radius?`,
+    correctAnswer: Math.round(radius * 10) / 10,
+    tolerance: 0.1,
+    unit: 'NM',
+    hint: 'Turn Radius = TAS ÷ 200',
+    explanation: `${tas} ÷ 200 = ${radius.toFixed(1)} NM`
+  };
+}
+
+function generateTrueAirspeed(): Problem {
+  const iasOptions = [100, 120, 140, 160, 180, 200, 250, 280];
+  const ias = pick(iasOptions);
+  const altitudes = [5000, 8000, 10000, 12000, 15000, 18000, 20000, 25000];
+  const altitude = pick(altitudes);
+
+  const correction = ias * (altitude / 1000) * 0.02;
+  const tas = ias + correction;
+
+  return {
+    id: generateId(),
+    category: 'true-airspeed',
+    question: `At ${altitude.toLocaleString()} ft MSL, IAS is ${ias} knots. What is your TAS?`,
+    correctAnswer: Math.round(tas),
+    tolerance: 3,
+    unit: 'knots',
+    hint: 'TAS = IAS + (IAS × altitude in 1000s × 2%)',
+    explanation: `Correction = ${ias} × ${altitude/1000} × 0.02 = ${Math.round(correction)} kts. TAS = ${ias} + ${Math.round(correction)} = ${Math.round(tas)} kts`
+  };
+}
+
+function generateTimeSpeedDistance(): Problem {
+  const questionType = pick(['time', 'distance', 'speed'] as const);
+
+  if (questionType === 'distance') {
+    const groundSpeeds = [120, 150, 180, 210, 240, 300, 360, 420, 480];
+    const gs = pick(groundSpeeds);
+    const times = [5, 6, 8, 10, 12, 15, 20, 25, 30];
+    const time = pick(times);
+    const distance = (gs / 60) * time;
+
+    return {
+      id: generateId(),
+      category: 'time-speed-distance',
+      question: `At ${gs} knots ground speed, how far do you travel in ${time} minutes?`,
+      correctAnswer: Math.round(distance),
+      tolerance: 2,
+      unit: 'NM',
+      hint: 'Distance = (GS ÷ 60) × Time in minutes',
+      explanation: `${gs} kts = ${gs/60} NM/min. ${gs/60} × ${time} min = ${Math.round(distance)} NM`
+    };
+  } else if (questionType === 'time') {
+    const groundSpeeds = [120, 150, 180, 210, 240, 300, 360, 420, 480];
+    const gs = pick(groundSpeeds);
+    const distances = [20, 30, 40, 50, 60, 80, 100, 120];
+    const distance = pick(distances);
+    const time = distance / (gs / 60);
+
+    return {
+      id: generateId(),
+      category: 'time-speed-distance',
+      question: `At ${gs} knots, how long to travel ${distance} NM?`,
+      correctAnswer: Math.round(time),
+      tolerance: 1,
+      unit: 'minutes',
+      hint: 'Time = Distance ÷ (GS ÷ 60)',
+      explanation: `${gs} kts = ${gs/60} NM/min. ${distance} NM ÷ ${gs/60} = ${Math.round(time)} minutes`
+    };
+  } else {
+    const times = [10, 12, 15, 20, 24, 30, 40, 45];
+    const time = pick(times);
+    const distances = [30, 40, 50, 60, 80, 100, 120, 150];
+    const distance = pick(distances);
+    const gs = (distance / time) * 60;
+
+    return {
+      id: generateId(),
+      category: 'time-speed-distance',
+      question: `You traveled ${distance} NM in ${time} minutes. What is your ground speed?`,
+      correctAnswer: Math.round(gs),
+      tolerance: 5,
+      unit: 'knots',
+      hint: 'GS = (Distance ÷ Time) × 60',
+      explanation: `${distance} ÷ ${time} = ${(distance/time).toFixed(1)} NM/min × 60 = ${Math.round(gs)} knots`
+    };
+  }
+}
+
+function generateDescentPlanning(): Problem {
+  const questionType = pick(['distance', 'top-of-descent'] as const);
+
+  if (questionType === 'distance') {
+    const altitudesToLose = [6, 8, 10, 12, 15, 18, 20, 24, 30];
+    const altToLose = pick(altitudesToLose);
+    const distance = altToLose * 3;
+
+    return {
+      id: generateId(),
+      category: 'descent-planning',
+      question: `You need to descend ${altToLose},000 feet. Using 3-to-1 rule, how many NM needed?`,
+      correctAnswer: distance,
+      tolerance: 0,
+      unit: 'NM',
+      hint: '3-to-1: Distance = Altitude (1000s) × 3',
+      explanation: `${altToLose} × 3 = ${distance} NM`
+    };
+  } else {
+    const cruiseAltitudes = [25000, 28000, 31000, 35000, 37000, 39000];
+    const cruiseAlt = pick(cruiseAltitudes);
+    const targetAltitudes = [8000, 10000, 11000, 12000];
+    const targetAlt = pick(targetAltitudes);
+    const restrictionDMEs = [15, 20, 25, 30];
+    const restrictionDME = pick(restrictionDMEs);
+
+    const altToLose = (cruiseAlt - targetAlt) / 1000;
+    const descentDistance = altToLose * 3;
+    const topOfDescent = restrictionDME + descentDistance;
+
+    return {
+      id: generateId(),
+      category: 'descent-planning',
+      question: `Cruising at FL${cruiseAlt/100}, need to cross ${restrictionDME} DME at ${(targetAlt/1000).toFixed(0)},000 ft. At what DME start descent?`,
+      correctAnswer: Math.round(topOfDescent),
+      tolerance: 2,
+      unit: 'DME',
+      hint: '3-to-1: Distance = Altitude (1000s) × 3, then add restriction DME',
+      explanation: `Lose ${altToLose}K ft × 3 = ${descentDistance} NM. Start at ${restrictionDME} + ${descentDistance} = ${topOfDescent} DME`
+    };
+  }
+}
+
+// ============================================
+// MAIN GENERATOR
+// ============================================
+
+const generators: Record<ProblemCategory, () => Problem> = {
+  'hours-to-decimal': generateHoursToDecimal,
+  'reciprocal-heading': generateReciprocalHeading,
+  'hydroplaning': generateHydroplaning,
+  'temp-conversion': generateTempConversion,
+  'isa-deviation': generateISADeviation,
+  'pressure-altitude': generatePressureAltitude,
+  'crosswind': generateCrosswind,
+  'headwind-tailwind': generateHeadwindTailwind,
+  'drift-angle': generateDriftAngle,
+  'unit-conversion': generateUnitConversion,
+  'visibility-rvr': generateVisibilityRVR,
+  'fuel-weight': generateFuelWeight,
+  'fuel-dumping': generateFuelDumping,
+  'magnetic-compass': generateMagneticCompass,
+  'sixty-to-one': generateSixtyToOne,
+  'standard-rate-turn': generateStandardRateTurn,
+  'turn-radius': generateTurnRadius,
+  'true-airspeed': generateTrueAirspeed,
+  'time-speed-distance': generateTimeSpeedDistance,
+  'descent-planning': generateDescentPlanning,
+};
+
+export function generateProblem(category?: ProblemCategory): Problem {
+  const cat = category || pick(Object.keys(generators) as ProblemCategory[]);
+  return generators[cat]();
+}
+
+export function generateProblems(count: number, category?: ProblemCategory): Problem[] {
+  return Array.from({ length: count }, () => generateProblem(category));
+}
+
+export function getAllCategories(): ProblemCategory[] {
+  return Object.keys(generators) as ProblemCategory[];
+}
+
+export function checkAnswer(problem: Problem, userAnswer: number): boolean {
+  const diff = Math.abs(problem.correctAnswer - userAnswer);
+  const tolerance = problem.tolerance;
+
+  // For zero tolerance, must be exact
+  if (tolerance === 0) {
+    return userAnswer === problem.correctAnswer;
+  }
+
+  // For percentage-based tolerance
+  if (tolerance < 1) {
+    return diff <= Math.abs(problem.correctAnswer * tolerance);
+  }
+
+  // For absolute tolerance
+  return diff <= tolerance;
+}
