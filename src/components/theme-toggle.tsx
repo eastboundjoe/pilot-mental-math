@@ -14,8 +14,9 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <Button variant="ghost" size="sm" className="w-9 h-9 p-0">
-        <span className="sr-only">Toggle theme</span>
+      <Button variant="ghost" size="sm" className="h-auto px-2 py-1 flex flex-col items-center gap-0.5">
+        <div className="w-5 h-5" />
+        <span className="text-[10px]">Light Mode</span>
       </Button>
     );
   }
@@ -25,7 +26,7 @@ export function ThemeToggle() {
       variant="ghost"
       size="sm"
       onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-      className="w-9 h-9 p-0"
+      className="h-auto px-2 py-1 flex flex-col items-center gap-0.5"
     >
       {theme === 'dark' ? (
         <svg
@@ -58,7 +59,7 @@ export function ThemeToggle() {
           />
         </svg>
       )}
-      <span className="sr-only">Toggle theme</span>
+      <span className="text-[10px]">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
     </Button>
   );
 }
