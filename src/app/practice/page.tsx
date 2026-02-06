@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -23,7 +24,8 @@ import Link from 'next/link';
 
 const DEFAULT_DURATION = 15; // Default 15 minutes
 
-export default function PracticePage() {
+// Wrapper component to handle Suspense for useSearchParams
+function PracticePageContent({ initialCategory }: { initialCategory: ProblemCategory | 'all' }) {
   const { user } = useAuth();
 
   // Session state
@@ -42,8 +44,8 @@ export default function PracticePage() {
   const [showExplanation, setShowExplanation] = useState(false);
   const [problemStartTime, setProblemStartTime] = useState(0);
 
-  // Category filter
-  const [selectedCategory, setSelectedCategory] = useState<ProblemCategory | 'all'>('all');
+  // Category filter - initialize from URL if valid category provided
+  const [selectedCategory, setSelectedCategory] = useState<ProblemCategory | 'all'>(initialCategory);
 
   // Session end modal
   const [showSummary, setShowSummary] = useState(false);
@@ -506,5 +508,33 @@ export default function PracticePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Component to read URL params and pass to content
+function PracticePageWithParams() {
+  const searchParams = useSearchParams();
+  const categoryFromUrl = searchParams.get('category');
+
+  const initialCategory: ProblemCategory | 'all' =
+    categoryFromUrl && getAllCategories().includes(categoryFromUrl as ProblemCategory)
+      ? (categoryFromUrl as ProblemCategory)
+      : 'all';
+
+  return <PracticePageContent initialCategory={initialCategory} />;
+}
+
+// Main page component with Suspense boundary
+export default function PracticePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white flex items-center justify-center">
+          <div className="animate-pulse">Loading...</div>
+        </div>
+      }
+    >
+      <PracticePageWithParams />
+    </Suspense>
   );
 }
