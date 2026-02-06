@@ -17,6 +17,7 @@ import {
   getCategoryTimingStats,
   getPracticeCalendar,
   getTotalDaysPracticed,
+  getWeakCategories,
   CalendarDay,
   CategoryTimingStats,
 } from '@/lib/storage';
@@ -31,6 +32,7 @@ export default function HomePage() {
   const [timingStats, setTimingStats] = useState<Record<ProblemCategory, CategoryTimingStats>>({} as Record<ProblemCategory, CategoryTimingStats>);
   const [calendarData, setCalendarData] = useState<CalendarDay[]>([]);
   const [totalDaysPracticed, setTotalDaysPracticed] = useState(0);
+  const [weakCategories, setWeakCategories] = useState<ProblemCategory[]>([]);
 
   useEffect(() => {
     setMounted(true);
@@ -40,6 +42,7 @@ export default function HomePage() {
     setTimingStats(getCategoryTimingStats());
     setCalendarData(getPracticeCalendar(365));
     setTotalDaysPracticed(getTotalDaysPracticed());
+    setWeakCategories(getWeakCategories(5));
     setRecentSessions(
       getRecentSessions(5).map((s) => ({
         date: new Date(s.date).toLocaleDateString(),
@@ -128,6 +131,50 @@ export default function HomePage() {
               </CardContent>
             </Card>
           </div>
+        )}
+
+        {/* Focus Areas - Categories needing practice */}
+        {weakCategories.length > 0 && (
+          <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border-amber-200 dark:border-amber-800">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-amber-500">
+                  <path fillRule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clipRule="evenodd" />
+                </svg>
+                Focus Areas
+                <span className="text-sm font-normal text-amber-600 dark:text-amber-400 ml-2">Categories that need more practice</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {weakCategories.map((category) => {
+                  const catStats = categoryStats[category];
+                  const accuracy = catStats ? Math.round((catStats.correct / catStats.attempted) * 100) : 0;
+                  const info = CATEGORY_INFO[category];
+                  return (
+                    <div
+                      key={category}
+                      className="bg-white dark:bg-slate-900 rounded-lg p-3 border border-amber-200 dark:border-amber-800"
+                    >
+                      <div className="font-medium text-slate-900 dark:text-white">{info?.name || category}</div>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-sm text-slate-500 dark:text-slate-400">
+                          {catStats?.attempted || 0} attempts
+                        </span>
+                        <span className={`font-bold ${accuracy >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`}>
+                          {accuracy}%
+                        </span>
+                      </div>
+                      <Progress value={accuracy} className="h-1.5 mt-2" />
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-sm text-amber-700 dark:text-amber-400 mt-4">
+                Tip: These categories have your lowest accuracy. Focus on them to improve your overall score.
+              </p>
+            </CardContent>
+          </Card>
         )}
 
         {/* Practice Heatmap */}
