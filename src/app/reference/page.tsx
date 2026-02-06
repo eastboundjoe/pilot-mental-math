@@ -23,7 +23,7 @@ export default function ReferencePage() {
   };
 
   const groupedCategories = {
-    'Navigation & Heading': ['reciprocal-heading', 'magnetic-compass', 'drift-angle', 'sixty-to-one', 'holding-pattern', 'slant-range'],
+    'Navigation & Heading': ['reciprocal-heading', 'compass-math', 'magnetic-compass', 'drift-angle', 'sixty-to-one', 'holding-pattern', 'slant-range'],
     'Wind & Components': ['crosswind', 'headwind-tailwind'],
     'Speed & Distance': ['time-speed-distance', 'true-airspeed', 'turn-radius', 'standard-rate-turn', 'unit-conversion'],
     'Altitude & Descent': ['pressure-altitude', 'descent-planning', 'visual-descent-point', 'isa-deviation', 'glide-distance'],

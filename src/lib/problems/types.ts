@@ -24,7 +24,8 @@ export type ProblemCategory =
   | 'cloud-base'
   | 'holding-pattern'
   | 'fuel-endurance'
-  | 'slant-range';
+  | 'slant-range'
+  | 'compass-math';
 
 export interface Problem {
   id: string;
@@ -470,6 +471,21 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
       ],
       answer: '3 DME',
       tip: 'DME shows slant range (diagonal), not ground distance. This matters most when close to the station at high altitude.'
+    }
+  },
+  'compass-math': {
+    name: '🧮 Compass Math',
+    description: 'Quick heading math for turns and hold entries: 90° turns, ±30°, ±45°, ±210°',
+    formula: '90° turns: +100 -10 (right) or -100 +10 (left). For other angles, add/subtract and wrap at 360°',
+    example: {
+      problem: 'You are on heading 270°. What heading after a right 90° turn?',
+      steps: [
+        { step: 'Right 90° = Add 100, subtract 10', explanation: 'The +1/-1 shortcut for 90° turns' },
+        { step: '270 + 100 = 370', explanation: 'Add 100 first' },
+        { step: '370 - 10 = 360°', explanation: 'Subtract 10' }
+      ],
+      answer: '360° (North)',
+      tip: 'Right 90°: +100 then -10. Left 90°: -100 then +10. For hold entries: teardrop = ±30°, parallel needs ±210°.'
     }
   }
 };

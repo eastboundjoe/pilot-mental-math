@@ -1120,6 +1120,125 @@ function generateSlantRange(): Problem {
   }
 }
 
+function generateCompassMath(): Problem {
+  const heading = randInt(1, 36) * 10; // Use clean 10° increments
+  const questionType = pick(['right-90', 'left-90', 'plus-30', 'minus-30', 'plus-45', 'minus-45', 'plus-210', 'minus-210']);
+
+  const normalize = (h: number): number => {
+    h = h % 360;
+    return h <= 0 ? h + 360 : h;
+  };
+
+  switch (questionType) {
+    case 'right-90': {
+      const answer = normalize(heading + 90);
+      return {
+        id: generateId(),
+        category: 'compass-math',
+        question: `Heading ${heading.toString().padStart(3, '0')}°. What heading after a RIGHT 90° turn?`,
+        correctAnswer: answer,
+        tolerance: 0,
+        unit: '°',
+        hint: 'Right 90°: Add 100, subtract 10',
+        explanation: `${heading} + 100 = ${heading + 100}, then - 10 = ${answer}°`
+      };
+    }
+    case 'left-90': {
+      const answer = normalize(heading - 90);
+      return {
+        id: generateId(),
+        category: 'compass-math',
+        question: `Heading ${heading.toString().padStart(3, '0')}°. What heading after a LEFT 90° turn?`,
+        correctAnswer: answer,
+        tolerance: 0,
+        unit: '°',
+        hint: 'Left 90°: Subtract 100, add 10',
+        explanation: `${heading} - 100 = ${heading - 100}, then + 10 = ${answer}°`
+      };
+    }
+    case 'plus-30': {
+      const answer = normalize(heading + 30);
+      return {
+        id: generateId(),
+        category: 'compass-math',
+        question: `Heading ${heading.toString().padStart(3, '0')}°. Add 30°. What is the new heading?`,
+        correctAnswer: answer,
+        tolerance: 0,
+        unit: '°',
+        hint: 'Add 30° and wrap at 360° if needed. Used for teardrop hold entries.',
+        explanation: `${heading} + 30 = ${heading + 30 > 360 ? `${heading + 30} - 360 = ` : ''}${answer}°`
+      };
+    }
+    case 'minus-30': {
+      const answer = normalize(heading - 30);
+      return {
+        id: generateId(),
+        category: 'compass-math',
+        question: `Heading ${heading.toString().padStart(3, '0')}°. Subtract 30°. What is the new heading?`,
+        correctAnswer: answer,
+        tolerance: 0,
+        unit: '°',
+        hint: 'Subtract 30° and wrap at 360° if needed. Used for teardrop hold entries.',
+        explanation: `${heading} - 30 = ${heading - 30 <= 0 ? `${heading - 30} + 360 = ` : ''}${answer}°`
+      };
+    }
+    case 'plus-45': {
+      const answer = normalize(heading + 45);
+      return {
+        id: generateId(),
+        category: 'compass-math',
+        question: `Heading ${heading.toString().padStart(3, '0')}°. Add 45°. What is the new heading?`,
+        correctAnswer: answer,
+        tolerance: 0,
+        unit: '°',
+        hint: 'Add 45° and wrap at 360° if needed. Common for intercept angles.',
+        explanation: `${heading} + 45 = ${heading + 45 > 360 ? `${heading + 45} - 360 = ` : ''}${answer}°`
+      };
+    }
+    case 'minus-45': {
+      const answer = normalize(heading - 45);
+      return {
+        id: generateId(),
+        category: 'compass-math',
+        question: `Heading ${heading.toString().padStart(3, '0')}°. Subtract 45°. What is the new heading?`,
+        correctAnswer: answer,
+        tolerance: 0,
+        unit: '°',
+        hint: 'Subtract 45° and wrap at 360° if needed. Common for intercept angles.',
+        explanation: `${heading} - 45 = ${heading - 45 <= 0 ? `${heading - 45} + 360 = ` : ''}${answer}°`
+      };
+    }
+    case 'plus-210': {
+      const answer = normalize(heading + 210);
+      return {
+        id: generateId(),
+        category: 'compass-math',
+        question: `Heading ${heading.toString().padStart(3, '0')}°. Add 210°. What is the new heading?`,
+        correctAnswer: answer,
+        tolerance: 0,
+        unit: '°',
+        hint: 'Add 210°: same as subtracting 150° (360 - 210 = 150). Used for parallel hold entries.',
+        explanation: `${heading} + 210 = ${heading + 210 > 360 ? `${heading + 210} - 360 = ` : ''}${answer}°`
+      };
+    }
+    case 'minus-210': {
+      const answer = normalize(heading - 210);
+      return {
+        id: generateId(),
+        category: 'compass-math',
+        question: `Heading ${heading.toString().padStart(3, '0')}°. Subtract 210°. What is the new heading?`,
+        correctAnswer: answer,
+        tolerance: 0,
+        unit: '°',
+        hint: 'Subtract 210°: same as adding 150° (360 - 210 = 150). Used for parallel hold entries.',
+        explanation: `${heading} - 210 = ${heading - 210 <= 0 ? `${heading - 210} + 360 = ` : ''}${answer}°`
+      };
+    }
+    default:
+      return generateCompassMath();
+  }
+}
+
 // ============================================
 // MAIN GENERATOR
 // ============================================
@@ -1151,6 +1270,7 @@ const generators: Record<ProblemCategory, () => Problem> = {
   'holding-pattern': generateHoldingPattern,
   'fuel-endurance': generateFuelEndurance,
   'slant-range': generateSlantRange,
+  'compass-math': generateCompassMath,
 };
 
 export function generateProblem(category?: ProblemCategory): Problem {
