@@ -268,6 +268,29 @@ export default function ReferencePage() {
             </CardContent>
           </Card>
 
+          {/* Square Roots for Hydroplaning */}
+          <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+            <CardHeader>
+              <CardTitle>Square Roots (for Hydroplaning)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 text-sm">
+                {[
+                  [36, 6], [49, 7], [64, 8], [81, 9], [100, 10], [121, 11],
+                  [144, 12], [169, 13], [196, 14], [225, 15], [256, 16], [289, 17],
+                ].map(([num, root]) => (
+                  <div key={num} className="bg-slate-100 dark:bg-slate-800 p-2 rounded text-center">
+                    <span className="text-slate-500 dark:text-slate-400">√</span>
+                    <span className="font-mono">{num}</span>
+                    <span className="text-slate-500 dark:text-slate-400"> = </span>
+                    <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">{root}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-slate-500 text-xs mt-2">Hydroplaning speed = 9 × √(tire pressure). Example: 144 psi → 9 × 12 = 108 knots</p>
+            </CardContent>
+          </Card>
+
           {/* ISA temperatures */}
           <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
             <CardHeader>
