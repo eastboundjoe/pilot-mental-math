@@ -233,9 +233,9 @@ export default function ReferencePage() {
               <CardTitle>Speed to Distance (NM per Minute)</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-5 gap-3 text-sm">
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 text-sm">
                 {[
-                  [60, 1], [120, 2], [180, 3], [240, 4], [300, 5],
+                  [60, '1'], [90, '1.5'], [120, '2'], [180, '3'], [240, '4'], [300, '5'],
                 ].map(([speed, nm]) => (
                   <div key={speed} className="bg-slate-100 dark:bg-slate-800 p-3 rounded text-center">
                     <div className="text-lg font-mono font-semibold text-blue-600 dark:text-blue-400">{speed} kts</div>
