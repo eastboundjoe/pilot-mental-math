@@ -799,6 +799,110 @@ function generateCloudBase(): Problem {
 }
 
 // ============================================
+// HOLDING PATTERN
+// ============================================
+
+function generateHoldingPattern(): Problem {
+  const questionType = pick(['outbound-heading', 'outbound-timing'] as const);
+
+  if (questionType === 'outbound-heading') {
+    // Calculate outbound heading with triple WCA
+    const inboundCourses = [360, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
+    const inboundCourse = pick(inboundCourses);
+    const wcaValues = [4, 5, 6, 7, 8, 10, 12];
+    const wca = pick(wcaValues);
+    const windFromLeft = Math.random() > 0.5;
+
+    // Outbound is opposite of inbound
+    let outboundCourse = inboundCourse <= 180 ? inboundCourse + 180 : inboundCourse - 180;
+
+    // Triple WCA on outbound
+    // If wind from left on inbound, it's from right on outbound → correct right (add)
+    // If wind from right on inbound, it's from left on outbound → correct left (subtract)
+    const tripleWCA = wca * 3;
+    let outboundHeading: number;
+
+    if (windFromLeft) {
+      // Wind from left on inbound = wind from right on outbound = add to heading
+      outboundHeading = outboundCourse + tripleWCA;
+    } else {
+      // Wind from right on inbound = wind from left on outbound = subtract from heading
+      outboundHeading = outboundCourse - tripleWCA;
+    }
+
+    // Normalize heading
+    if (outboundHeading > 360) outboundHeading -= 360;
+    if (outboundHeading <= 0) outboundHeading += 360;
+
+    const windDirection = windFromLeft ? 'left' : 'right';
+    const inboundDisplay = inboundCourse.toString().padStart(3, '0');
+
+    return {
+      id: generateId(),
+      category: 'holding-pattern',
+      question: `Holding inbound ${inboundDisplay}°, WCA is ${wca}° (wind from ${windDirection}). What is the outbound heading?`,
+      correctAnswer: Math.round(outboundHeading),
+      tolerance: 1,
+      unit: '°',
+      hint: 'Outbound heading = Reciprocal ± (3 × WCA). Triple correction compensates for turns.',
+      explanation: `Outbound course = ${outboundCourse}°. Triple WCA = ${wca} × 3 = ${tripleWCA}°. ${outboundCourse}° ${windFromLeft ? '+' : '-'} ${tripleWCA}° = ${Math.round(outboundHeading)}°`
+    };
+  } else {
+    // Timing correction for outbound leg
+    const windSpeeds = [10, 15, 20, 25, 30];
+    const windSpeed = pick(windSpeeds);
+    const windTypes = ['direct-tail', 'quartering-tail', 'direct-head', 'quartering-head'] as const;
+    const windType = pick(windTypes);
+
+    let correction: number;
+    let baseTime = 60; // Standard 1-minute outbound leg
+
+    switch (windType) {
+      case 'direct-tail':
+        // Tailwind on outbound: subtract 1 sec per knot
+        correction = -windSpeed;
+        break;
+      case 'quartering-tail':
+        // Quartering tailwind: subtract 0.5 sec per knot
+        correction = -Math.round(windSpeed * 0.5);
+        break;
+      case 'direct-head':
+        // Headwind on outbound: add 1 sec per knot
+        correction = windSpeed;
+        break;
+      case 'quartering-head':
+        // Quartering headwind: add 0.5 sec per knot
+        correction = Math.round(windSpeed * 0.5);
+        break;
+    }
+
+    const outboundTime = baseTime + correction;
+
+    const windDescription = {
+      'direct-tail': 'direct tailwind',
+      'quartering-tail': 'quartering tailwind (45°)',
+      'direct-head': 'direct headwind',
+      'quartering-head': 'quartering headwind (45°)'
+    }[windType];
+
+    const correctionRule = windType.includes('tail')
+      ? (windType === 'direct-tail' ? '1 sec/kt' : '0.5 sec/kt')
+      : (windType === 'direct-head' ? '1 sec/kt' : '0.5 sec/kt');
+
+    return {
+      id: generateId(),
+      category: 'holding-pattern',
+      question: `Holding with ${windSpeed} kt ${windDescription} on outbound leg. What outbound time for 1-min inbound?`,
+      correctAnswer: outboundTime,
+      tolerance: 2,
+      unit: 'seconds',
+      hint: `${windType.includes('tail') ? 'Tailwind: subtract' : 'Headwind: add'} ${correctionRule}`,
+      explanation: `${windType.includes('tail') ? 'Tailwind shortens' : 'Headwind lengthens'} outbound. ${windSpeed} kt × ${windType.includes('quartering') ? '0.5' : '1'} = ${Math.abs(correction)} sec. 60 ${correction >= 0 ? '+' : '-'} ${Math.abs(correction)} = ${outboundTime} sec`
+    };
+  }
+}
+
+// ============================================
 // MAIN GENERATOR
 // ============================================
 
@@ -826,6 +930,7 @@ const generators: Record<ProblemCategory, () => Problem> = {
   'visual-descent-point': generateVisualDescentPoint,
   'glide-distance': generateGlideDistance,
   'cloud-base': generateCloudBase,
+  'holding-pattern': generateHoldingPattern,
 };
 
 export function generateProblem(category?: ProblemCategory): Problem {

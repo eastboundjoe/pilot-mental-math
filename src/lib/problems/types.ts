@@ -21,7 +21,8 @@ export type ProblemCategory =
   | 'descent-planning'
   | 'visual-descent-point'
   | 'glide-distance'
-  | 'cloud-base';
+  | 'cloud-base'
+  | 'holding-pattern';
 
 export interface Problem {
   id: string;
@@ -419,6 +420,22 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
       ],
       answer: '4,000 ft AGL',
       tip: 'Small spread (1-2°C) = low clouds/fog likely. Large spread (10°C+) = high clouds or clear. Allow ±200 ft margin.'
+    }
+  },
+  'holding-pattern': {
+    name: '🔄 Holding Pattern',
+    description: 'Wind corrections and timing for holding patterns',
+    formula: 'Inbound: 1× WCA | Outbound: 3× WCA | Timing: ±1 sec/kt (tail/head), ±0.5 sec/kt (quartering)',
+    example: {
+      problem: 'Inbound course 360°, WCA is 6°, wind from left. What outbound heading?',
+      steps: [
+        { step: 'Outbound course = 180°', explanation: 'Opposite of inbound' },
+        { step: 'Outbound correction = 3 × 6° = 18°', explanation: 'Triple the WCA for outbound' },
+        { step: 'Wind from left = correct right', explanation: 'On outbound, wind is now from right, so correct right (add)' },
+        { step: '180° + 18° = 198°', explanation: 'Apply triple correction' }
+      ],
+      answer: '198° outbound heading',
+      tip: 'The 3× rule compensates for wind during both turns plus the outbound leg. Inbound always gets 1× WCA.'
     }
   }
 };
