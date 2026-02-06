@@ -9,6 +9,8 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>;
+  signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -52,13 +54,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
+  const signInWithPassword = async (email: string, password: string) => {
+    const supabase = getSupabase();
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    return { error };
+  };
+
+  const signUp = async (email: string, password: string) => {
+    const supabase = getSupabase();
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`,
+      },
+    });
+    return { error };
+  };
+
   const signOut = async () => {
     const supabase = getSupabase();
     await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signInWithMagicLink, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, signInWithMagicLink, signInWithPassword, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
