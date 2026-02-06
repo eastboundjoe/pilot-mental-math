@@ -125,6 +125,163 @@ export function getWeakCategories(limit: number = 5): ProblemCategory[] {
 }
 
 // ============================================
+// TIMING STATS (Per Category)
+// ============================================
+
+export interface CategoryTimingStats {
+  avgTime: number;
+  fastest: number;
+  slowest: number;
+  totalAttempts: number;
+}
+
+export function getCategoryTimingStats(): Record<ProblemCategory, CategoryTimingStats> {
+  const results = getResults();
+  const stats: Record<string, { times: number[] }> = {};
+
+  for (const result of results) {
+    if (!stats[result.category]) {
+      stats[result.category] = { times: [] };
+    }
+    stats[result.category].times.push(result.timeSpent);
+  }
+
+  const output: Record<string, CategoryTimingStats> = {};
+  for (const [category, data] of Object.entries(stats)) {
+    const times = data.times;
+    output[category] = {
+      avgTime: times.length > 0 ? Math.round(times.reduce((a, b) => a + b, 0) / times.length) : 0,
+      fastest: times.length > 0 ? Math.min(...times) : 0,
+      slowest: times.length > 0 ? Math.max(...times) : 0,
+      totalAttempts: times.length,
+    };
+  }
+
+  return output as Record<ProblemCategory, CategoryTimingStats>;
+}
+
+// ============================================
+// DAILY HISTORY (For Heatmap)
+// ============================================
+
+export interface DailyStats {
+  practiced: boolean;
+  problemsAttempted: number;
+  problemsCorrect: number;
+  accuracy: number;
+  sessionsCount: number;
+}
+
+export function getDailyHistory(): Record<string, DailyStats> {
+  const sessions = getSessions();
+  const dailyStats: Record<string, DailyStats> = {};
+
+  for (const session of sessions) {
+    // Normalize date to YYYY-MM-DD format
+    const dateKey = new Date(session.date).toISOString().split('T')[0];
+
+    if (!dailyStats[dateKey]) {
+      dailyStats[dateKey] = {
+        practiced: true,
+        problemsAttempted: 0,
+        problemsCorrect: 0,
+        accuracy: 0,
+        sessionsCount: 0,
+      };
+    }
+
+    dailyStats[dateKey].problemsAttempted += session.problemsAttempted;
+    dailyStats[dateKey].problemsCorrect += session.problemsCorrect;
+    dailyStats[dateKey].sessionsCount += 1;
+  }
+
+  // Calculate accuracy for each day
+  for (const dateKey of Object.keys(dailyStats)) {
+    const day = dailyStats[dateKey];
+    day.accuracy = day.problemsAttempted > 0
+      ? Math.round((day.problemsCorrect / day.problemsAttempted) * 100)
+      : 0;
+  }
+
+  return dailyStats;
+}
+
+// ============================================
+// PRACTICE CALENDAR (For Heatmap Grid)
+// ============================================
+
+export interface CalendarDay {
+  date: string;
+  problemsAttempted: number;
+  accuracy: number;
+  sessionsCount: number;
+}
+
+export function getPracticeCalendar(daysBack: number = 365): CalendarDay[] {
+  const dailyHistory = getDailyHistory();
+  const calendar: CalendarDay[] = [];
+  const today = new Date();
+
+  for (let i = daysBack - 1; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    const dateKey = date.toISOString().split('T')[0];
+
+    const dayStats = dailyHistory[dateKey];
+    calendar.push({
+      date: dateKey,
+      problemsAttempted: dayStats?.problemsAttempted || 0,
+      accuracy: dayStats?.accuracy || 0,
+      sessionsCount: dayStats?.sessionsCount || 0,
+    });
+  }
+
+  return calendar;
+}
+
+// ============================================
+// ACCURACY TREND (Last N Days)
+// ============================================
+
+export interface AccuracyTrendPoint {
+  date: string;
+  accuracy: number;
+  problems: number;
+}
+
+export function getAccuracyTrend(days: number = 30): AccuracyTrendPoint[] {
+  const dailyHistory = getDailyHistory();
+  const trend: AccuracyTrendPoint[] = [];
+  const today = new Date();
+
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    const dateKey = date.toISOString().split('T')[0];
+
+    const dayStats = dailyHistory[dateKey];
+    if (dayStats && dayStats.problemsAttempted > 0) {
+      trend.push({
+        date: dateKey,
+        accuracy: dayStats.accuracy,
+        problems: dayStats.problemsAttempted,
+      });
+    }
+  }
+
+  return trend;
+}
+
+// ============================================
+// SUMMARY STATS
+// ============================================
+
+export function getTotalDaysPracticed(): number {
+  const dailyHistory = getDailyHistory();
+  return Object.keys(dailyHistory).length;
+}
+
+// ============================================
 // STREAK TRACKING
 // ============================================
 
