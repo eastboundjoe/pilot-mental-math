@@ -599,7 +599,7 @@ function generateTimeSpeedDistance(): Problem {
 }
 
 function generateDescentPlanning(): Problem {
-  const questionType = pick(['distance', 'top-of-descent'] as const);
+  const questionType = pick(['distance', 'top-of-descent', 'descent-rate'] as const);
 
   if (questionType === 'distance') {
     const altitudesToLose = [6, 8, 10, 12, 15, 18, 20, 24, 30];
@@ -616,7 +616,7 @@ function generateDescentPlanning(): Problem {
       hint: '3-to-1: Distance = Altitude (1000s) × 3',
       explanation: `${altToLose} × 3 = ${distance} NM`
     };
-  } else {
+  } else if (questionType === 'top-of-descent') {
     const cruiseAltitudes = [25000, 28000, 31000, 35000, 37000, 39000];
     const cruiseAlt = pick(cruiseAltitudes);
     const targetAltitudes = [8000, 10000, 11000, 12000];
@@ -637,6 +637,22 @@ function generateDescentPlanning(): Problem {
       unit: 'DME',
       hint: '3-to-1: Distance = Altitude (1000s) × 3, then add restriction DME',
       explanation: `Lose ${altToLose}K ft × 3 = ${descentDistance} NM. Start at ${restrictionDME} + ${descentDistance} = ${topOfDescent} DME`
+    };
+  } else {
+    // Descent Rate: Ground Speed × 5 = FPM for 3° descent
+    const groundSpeeds = [100, 120, 140, 150, 160, 180, 200, 220, 240, 280, 300];
+    const gs = pick(groundSpeeds);
+    const descentRate = gs * 5;
+
+    return {
+      id: generateId(),
+      category: 'descent-planning',
+      question: `Flying a 3° descent at ${gs} knots ground speed. What descent rate is required?`,
+      correctAnswer: descentRate,
+      tolerance: 10,
+      unit: 'fpm',
+      hint: 'Descent Rate = Ground Speed × 5',
+      explanation: `${gs} kts × 5 = ${descentRate} fpm`
     };
   }
 }
@@ -703,6 +719,86 @@ function generateVisualDescentPoint(): Problem {
 }
 
 // ============================================
+// GLIDE DISTANCE
+// ============================================
+
+function generateGlideDistance(): Problem {
+  // Common altitudes for engine-out scenarios
+  const altitudes = [6000, 9000, 12000, 15000, 18000, 21000, 24000, 30000, 36000];
+  const altitude = pick(altitudes);
+
+  // Common glide ratios for different aircraft types
+  const glideRatios: { ratio: number; aircraft: string }[] = [
+    { ratio: 9, aircraft: 'light single' },
+    { ratio: 10, aircraft: 'training aircraft' },
+    { ratio: 12, aircraft: 'light twin' },
+    { ratio: 15, aircraft: 'turboprop' },
+    { ratio: 17, aircraft: 'jet' },
+  ];
+  const glideInfo = pick(glideRatios);
+
+  // Glide distance = (Altitude / 6000) × Glide Ratio
+  // 6000 ft ≈ 1 NM vertically
+  const altitudeInNM = altitude / 6000;
+  const glideDistance = altitudeInNM * glideInfo.ratio;
+
+  return {
+    id: generateId(),
+    category: 'glide-distance',
+    question: `Engine failure at ${altitude.toLocaleString()} ft. With a ${glideInfo.ratio}:1 glide ratio (${glideInfo.aircraft}), how far can you glide?`,
+    correctAnswer: Math.round(glideDistance),
+    tolerance: 2,
+    unit: 'NM',
+    hint: 'Glide Distance = (Altitude ÷ 6,000) × Glide Ratio',
+    explanation: `${altitude.toLocaleString()} ft ÷ 6,000 = ${altitudeInNM.toFixed(1)} NM altitude. ${altitudeInNM.toFixed(1)} × ${glideInfo.ratio} = ${Math.round(glideDistance)} NM`
+  };
+}
+
+// ============================================
+// CLOUD BASE ESTIMATION
+// ============================================
+
+function generateCloudBase(): Problem {
+  // Realistic temperature/dewpoint combinations
+  const temps = [15, 18, 20, 22, 25, 28, 30, 32, 35];
+  const temp = pick(temps);
+
+  // Dewpoint spread between 2 and 15 degrees (realistic range)
+  const spreads = [2, 3, 4, 5, 6, 7, 8, 10, 12, 15];
+  const spread = pick(spreads);
+  const dewpoint = temp - spread;
+
+  // Cloud base = Spread × 400 ft (or 125 meters)
+  const cloudBase = spread * 400;
+
+  const questionType = pick(['calculate', 'from-metar'] as const);
+
+  if (questionType === 'calculate') {
+    return {
+      id: generateId(),
+      category: 'cloud-base',
+      question: `Temperature ${temp}°C, dew point ${dewpoint}°C. Estimate the cloud base AGL.`,
+      correctAnswer: cloudBase,
+      tolerance: 200,
+      unit: 'feet',
+      hint: 'Cloud Base = Dew Point Spread × 400 ft',
+      explanation: `Spread = ${temp} - ${dewpoint} = ${spread}°C. Cloud base = ${spread} × 400 = ${cloudBase.toLocaleString()} ft AGL`
+    };
+  } else {
+    return {
+      id: generateId(),
+      category: 'cloud-base',
+      question: `METAR shows ${temp}/${dewpoint.toString().padStart(2, '0')}. Estimate cumulus cloud bases.`,
+      correctAnswer: cloudBase,
+      tolerance: 200,
+      unit: 'feet',
+      hint: 'Cloud Base = (Temp - Dewpoint) × 400 ft',
+      explanation: `Spread = ${temp} - ${dewpoint} = ${spread}°C. Cloud base ≈ ${spread} × 400 = ${cloudBase.toLocaleString()} ft AGL`
+    };
+  }
+}
+
+// ============================================
 // MAIN GENERATOR
 // ============================================
 
@@ -728,6 +824,8 @@ const generators: Record<ProblemCategory, () => Problem> = {
   'time-speed-distance': generateTimeSpeedDistance,
   'descent-planning': generateDescentPlanning,
   'visual-descent-point': generateVisualDescentPoint,
+  'glide-distance': generateGlideDistance,
+  'cloud-base': generateCloudBase,
 };
 
 export function generateProblem(category?: ProblemCategory): Problem {

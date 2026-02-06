@@ -19,7 +19,9 @@ export type ProblemCategory =
   | 'true-airspeed'
   | 'time-speed-distance'
   | 'descent-planning'
-  | 'visual-descent-point';
+  | 'visual-descent-point'
+  | 'glide-distance'
+  | 'cloud-base';
 
 export interface Problem {
   id: string;
@@ -389,6 +391,34 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
       ],
       answer: '2.8 DME',
       tip: 'For timing method: HAT ÷ 10 = seconds before MAP (assumes 600 fpm descent rate)'
+    }
+  },
+  'glide-distance': {
+    name: '🛩️ Glide Distance',
+    description: 'Calculate glide distance for engine-out scenarios',
+    formula: 'Glide Distance = (Altitude ÷ 6000) × Glide Ratio. 6,000 ft = 1 NM vertically',
+    example: {
+      problem: 'At 18,000 ft with 15:1 glide ratio. How far can you glide?',
+      steps: [
+        { step: '18,000 ÷ 6,000 = 3', explanation: '6,000 ft = 1 NM vertically, so 18,000 ft = 3 NM of altitude' },
+        { step: '3 × 15 = 45 NM', explanation: 'Multiply vertical NM by glide ratio' }
+      ],
+      answer: '45 NM',
+      tip: 'Common glide ratios: Cessna 172 ≈ 9:1, Jet ≈ 15-17:1. Headwind reduces range, tailwind extends it.'
+    }
+  },
+  'cloud-base': {
+    name: '☁️ Cloud Base',
+    description: 'Estimate cloud base height from dew point spread',
+    formula: 'Cloud Base (ft AGL) = Dew Point Spread (°C) × 400',
+    example: {
+      problem: 'Temperature is 25°C, dew point is 15°C. What is the cloud base?',
+      steps: [
+        { step: '25 - 15 = 10°C', explanation: 'Calculate the dew point spread' },
+        { step: '10 × 400 = 4,000 ft', explanation: 'Multiply spread by 400 ft per degree' }
+      ],
+      answer: '4,000 ft AGL',
+      tip: 'Small spread (1-2°C) = low clouds/fog likely. Large spread (10°C+) = high clouds or clear. Allow ±200 ft margin.'
     }
   }
 };
