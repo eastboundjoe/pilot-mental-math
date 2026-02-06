@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { useAuth } from '@/components/auth-provider';
 import {
   generateProblem,
   checkAnswer,
@@ -17,11 +18,14 @@ import {
   getAllCategories,
 } from '@/lib/problems';
 import { saveResult, saveSession, updateStreak, SessionStats } from '@/lib/storage';
+import { saveResultToCloud, saveSessionToCloud, updateStreakInCloud } from '@/lib/cloud-storage';
 import Link from 'next/link';
 
 const SESSION_DURATION = 30 * 60; // 30 minutes in seconds
 
 export default function PracticePage() {
+  const { user } = useAuth();
+
   // Session state
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -76,16 +80,25 @@ export default function PracticePage() {
     setTimeout(() => inputRef.current?.focus(), 50);
   }, [selectedCategory]);
 
-  const startSession = () => {
+  const startSession = async () => {
     setIsRunning(true);
     setIsPaused(false);
     setTimeRemaining(SESSION_DURATION);
     setSessionResults([]);
     loadNextProblem();
+
+    // Update streak (local and cloud)
     updateStreak();
+    if (user) {
+      try {
+        await updateStreakInCloud(user.id);
+      } catch (error) {
+        console.error('Error updating cloud streak:', error);
+      }
+    }
   };
 
-  const endSession = useCallback(() => {
+  const endSession = useCallback(async () => {
     setIsRunning(false);
     setShowSummary(true);
 
@@ -116,11 +129,21 @@ export default function PracticePage() {
         categoryBreakdown,
       };
 
+      // Save locally
       saveSession(session);
-    }
-  }, [sessionResults, timeRemaining]);
 
-  const submitAnswer = () => {
+      // Save to cloud if logged in
+      if (user) {
+        try {
+          await saveSessionToCloud(user.id, session);
+        } catch (error) {
+          console.error('Error saving session to cloud:', error);
+        }
+      }
+    }
+  }, [sessionResults, timeRemaining, user]);
+
+  const submitAnswer = async () => {
     if (!currentProblem || showResult) return;
 
     const answer = parseFloat(userAnswer);
@@ -143,7 +166,18 @@ export default function PracticePage() {
     };
 
     setSessionResults((prev) => [...prev, result]);
+
+    // Save locally
     saveResult(result);
+
+    // Save to cloud if logged in
+    if (user) {
+      try {
+        await saveResultToCloud(user.id, result);
+      } catch (error) {
+        console.error('Error saving result to cloud:', error);
+      }
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

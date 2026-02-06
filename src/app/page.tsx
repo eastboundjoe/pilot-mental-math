@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { HeatmapCalendar } from '@/components/heatmap-calendar';
 import { TimingBreakdown } from '@/components/timing-breakdown';
+import { AuthModal } from '@/components/auth-modal';
+import { useAuth } from '@/components/auth-provider';
 import {
   getOverallStats,
   getCategoryStats,
@@ -21,10 +23,20 @@ import {
   CalendarDay,
   CategoryTimingStats,
 } from '@/lib/storage';
-import { CATEGORY_INFO, ProblemCategory } from '@/lib/problems';
+import {
+  getSessionsFromCloud,
+  getResultsFromCloud,
+  getStreakFromCloud,
+  migrateLocalDataToCloud,
+} from '@/lib/cloud-storage';
+import { CATEGORY_INFO, ProblemCategory, SessionStats, ProblemResult } from '@/lib/problems';
 
 export default function HomePage() {
+  const { user, loading: authLoading, signOut } = useAuth();
   const [mounted, setMounted] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [migrating, setMigrating] = useState(false);
+  const [migrationMessage, setMigrationMessage] = useState<string | null>(null);
   const [stats, setStats] = useState({ totalProblems: 0, totalCorrect: 0, accuracy: 0, avgTime: 0 });
   const [streak, setStreak] = useState(0);
   const [categoryStats, setCategoryStats] = useState<Record<string, { attempted: number; correct: number; avgTime: number }>>({});
@@ -34,8 +46,8 @@ export default function HomePage() {
   const [totalDaysPracticed, setTotalDaysPracticed] = useState(0);
   const [weakCategories, setWeakCategories] = useState<ProblemCategory[]>([]);
 
-  useEffect(() => {
-    setMounted(true);
+  // Load data from localStorage (guest mode)
+  const loadLocalData = useCallback(() => {
     setStats(getOverallStats());
     setStreak(getStreak());
     setCategoryStats(getCategoryStats());
@@ -51,6 +63,148 @@ export default function HomePage() {
       }))
     );
   }, []);
+
+  // Load data from cloud (logged in)
+  const loadCloudData = useCallback(async (userId: string) => {
+    try {
+      // Check for local data to migrate
+      const localSessions = localStorage.getItem('pilot-math-sessions');
+      const localResults = localStorage.getItem('pilot-math-results');
+
+      if (localSessions || localResults) {
+        setMigrating(true);
+        const { sessions, results } = await migrateLocalDataToCloud(userId);
+        if (sessions > 0 || results > 0) {
+          setMigrationMessage(`Migrated ${sessions} sessions and ${results} results to cloud!`);
+          setTimeout(() => setMigrationMessage(null), 5000);
+        }
+        setMigrating(false);
+      }
+
+      // Load from cloud
+      const [cloudSessions, cloudResults, cloudStreak] = await Promise.all([
+        getSessionsFromCloud(userId),
+        getResultsFromCloud(userId),
+        getStreakFromCloud(userId),
+      ]);
+
+      // Calculate stats from cloud data
+      if (cloudResults.length > 0) {
+        const totalProblems = cloudResults.length;
+        const totalCorrect = cloudResults.filter(r => r.isCorrect).length;
+        const totalTime = cloudResults.reduce((sum, r) => sum + r.timeSpent, 0);
+
+        setStats({
+          totalProblems,
+          totalCorrect,
+          accuracy: Math.round((totalCorrect / totalProblems) * 100),
+          avgTime: Math.round(totalTime / totalProblems),
+        });
+
+        // Category stats
+        const catStats: Record<string, { attempted: number; correct: number; totalTime: number }> = {};
+        for (const result of cloudResults) {
+          if (!catStats[result.category]) {
+            catStats[result.category] = { attempted: 0, correct: 0, totalTime: 0 };
+          }
+          catStats[result.category].attempted++;
+          if (result.isCorrect) catStats[result.category].correct++;
+          catStats[result.category].totalTime += result.timeSpent;
+        }
+
+        const formattedCatStats: Record<string, { attempted: number; correct: number; avgTime: number }> = {};
+        for (const [cat, data] of Object.entries(catStats)) {
+          formattedCatStats[cat] = {
+            attempted: data.attempted,
+            correct: data.correct,
+            avgTime: data.attempted > 0 ? Math.round(data.totalTime / data.attempted) : 0,
+          };
+        }
+        setCategoryStats(formattedCatStats);
+
+        // Timing stats
+        const timings: Record<string, { times: number[] }> = {};
+        for (const result of cloudResults) {
+          if (!timings[result.category]) timings[result.category] = { times: [] };
+          timings[result.category].times.push(result.timeSpent);
+        }
+        const formattedTimings: Record<string, CategoryTimingStats> = {};
+        for (const [cat, data] of Object.entries(timings)) {
+          formattedTimings[cat] = {
+            avgTime: data.times.length > 0 ? Math.round(data.times.reduce((a, b) => a + b, 0) / data.times.length) : 0,
+            fastest: data.times.length > 0 ? Math.min(...data.times) : 0,
+            slowest: data.times.length > 0 ? Math.max(...data.times) : 0,
+            totalAttempts: data.times.length,
+          };
+        }
+        setTimingStats(formattedTimings as Record<ProblemCategory, CategoryTimingStats>);
+
+        // Weak categories
+        const weak = Object.entries(formattedCatStats)
+          .filter(([, data]) => data.attempted >= 5)
+          .sort((a, b) => (a[1].correct / a[1].attempted) - (b[1].correct / b[1].attempted))
+          .slice(0, 5)
+          .map(([cat]) => cat as ProblemCategory);
+        setWeakCategories(weak);
+      }
+
+      // Sessions for recent and calendar
+      if (cloudSessions.length > 0) {
+        setRecentSessions(
+          cloudSessions.slice(0, 5).map((s) => ({
+            date: new Date(s.date).toLocaleDateString(),
+            accuracy: s.accuracy,
+            problems: s.problemsAttempted,
+          }))
+        );
+
+        // Calendar data
+        const dailyStats: Record<string, { problems: number; accuracy: number }> = {};
+        for (const session of cloudSessions) {
+          const dateKey = new Date(session.date).toISOString().split('T')[0];
+          if (!dailyStats[dateKey]) {
+            dailyStats[dateKey] = { problems: 0, accuracy: 0 };
+          }
+          dailyStats[dateKey].problems += session.problemsAttempted;
+          dailyStats[dateKey].accuracy = session.accuracy; // Use latest
+        }
+
+        const calendar: CalendarDay[] = [];
+        const today = new Date();
+        for (let i = 364; i >= 0; i--) {
+          const date = new Date(today);
+          date.setDate(date.getDate() - i);
+          const dateKey = date.toISOString().split('T')[0];
+          calendar.push({
+            date: dateKey,
+            problemsAttempted: dailyStats[dateKey]?.problems || 0,
+            accuracy: dailyStats[dateKey]?.accuracy || 0,
+            sessionsCount: dailyStats[dateKey] ? 1 : 0,
+          });
+        }
+        setCalendarData(calendar);
+        setTotalDaysPracticed(Object.keys(dailyStats).length);
+      }
+
+      setStreak(cloudStreak.currentStreak);
+    } catch (error) {
+      console.error('Error loading cloud data:', error);
+      // Fall back to local data
+      loadLocalData();
+    }
+  }, [loadLocalData]);
+
+  useEffect(() => {
+    setMounted(true);
+
+    if (!authLoading) {
+      if (user) {
+        loadCloudData(user.id);
+      } else {
+        loadLocalData();
+      }
+    }
+  }, [user, authLoading, loadLocalData, loadCloudData]);
 
   if (!mounted) {
     return (
@@ -78,10 +232,64 @@ export default function HomePage() {
                 {streak} day streak
               </Badge>
             )}
+            {user ? (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 text-sm text-emerald-600 dark:text-emerald-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                    <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
+                  </svg>
+                  <span className="hidden sm:inline">Synced</span>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => signOut()} className="text-slate-500">
+                  Sign Out
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAuthModal(true)}
+                className="border-emerald-300 dark:border-emerald-700 text-emerald-600 dark:text-emerald-400"
+              >
+                Sign In
+              </Button>
+            )}
             <ThemeToggle />
           </div>
         </div>
       </header>
+
+      {/* Auth Modal */}
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+
+      {/* Migration Message */}
+      {migrationMessage && (
+        <div className="bg-emerald-100 dark:bg-emerald-900/50 border-b border-emerald-200 dark:border-emerald-800 p-3 text-center text-emerald-700 dark:text-emerald-300 text-sm">
+          {migrationMessage}
+        </div>
+      )}
+
+      {/* Sync Banner for guests */}
+      {!user && stats.totalProblems > 0 && (
+        <div className="bg-blue-50 dark:bg-blue-900/30 border-b border-blue-200 dark:border-blue-800 p-3">
+          <div className="max-w-4xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300 text-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+              </svg>
+              <span>Your progress is stored locally. Sign in to sync across devices.</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowAuthModal(true)}
+              className="text-blue-600 dark:text-blue-400"
+            >
+              Sign In
+            </Button>
+          </div>
+        </div>
+      )}
 
       <main className="max-w-4xl mx-auto p-6 space-y-8">
         {/* Quick start */}
