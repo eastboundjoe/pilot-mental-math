@@ -139,6 +139,24 @@ export default function ReferencePage() {
                               </div>
                             )}
 
+                            {/* Video Link */}
+                            {info.videoUrl && (
+                              <a
+                                href={info.videoUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-3 mb-4 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0">
+                                  <path fillRule="evenodd" d="M2.25 5.25a3 3 0 013-3h13.5a3 3 0 013 3V15a3 3 0 01-3 3h-3v.257c0 .597.237 1.17.659 1.591l.621.622a.75.75 0 01-.53 1.28h-9a.75.75 0 01-.53-1.28l.621-.622a2.25 2.25 0 00.659-1.59V18h-3a3 3 0 01-3-3V5.25zm1.5 0v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5z" clipRule="evenodd" />
+                                </svg>
+                                <div>
+                                  <div className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide">Video Explanation</div>
+                                  <div className="text-red-700 dark:text-red-300 text-sm">Watch on YouTube →</div>
+                                </div>
+                              </a>
+                            )}
+
                             {/* Practice This Button */}
                             <Link href={`/practice?category=${catId}`}>
                               <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">

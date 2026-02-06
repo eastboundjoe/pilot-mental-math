@@ -75,6 +75,7 @@ export interface CategoryInfo {
   description: string;
   formula: string;
   example: CategoryExample;
+  videoUrl?: string;
 }
 
 export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
@@ -438,7 +439,8 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
       ],
       answer: '198° outbound heading',
       tip: 'The 3× rule compensates for wind during both turns plus the outbound leg. Inbound always gets 1× WCA.'
-    }
+    },
+    videoUrl: 'https://www.youtube.com/watch?v=25wWPRvJVV0'
   },
   'fuel-endurance': {
     name: '⏳ Fuel Endurance',
