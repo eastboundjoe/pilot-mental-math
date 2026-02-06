@@ -4,9 +4,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { StopwatchTimer, DurationSelector } from '@/components/stopwatch-timer';
 import { useAuth } from '@/components/auth-provider';
 import {
   generateProblem,
@@ -21,7 +21,7 @@ import { saveResult, saveSession, updateStreak, SessionStats } from '@/lib/stora
 import { saveResultToCloud, saveSessionToCloud, updateStreakInCloud } from '@/lib/cloud-storage';
 import Link from 'next/link';
 
-const SESSION_DURATION = 30 * 60; // 30 minutes in seconds
+const DEFAULT_DURATION = 15; // Default 15 minutes
 
 export default function PracticePage() {
   const { user } = useAuth();
@@ -29,7 +29,9 @@ export default function PracticePage() {
   // Session state
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(SESSION_DURATION);
+  const [sessionDuration, setSessionDuration] = useState(DEFAULT_DURATION);
+  const [timeRemaining, setTimeRemaining] = useState(DEFAULT_DURATION * 60);
+  const [totalSessionTime, setTotalSessionTime] = useState(DEFAULT_DURATION * 60);
   const [sessionResults, setSessionResults] = useState<ProblemResult[]>([]);
 
   // Problem state
@@ -81,9 +83,11 @@ export default function PracticePage() {
   }, [selectedCategory]);
 
   const startSession = async () => {
+    const durationInSeconds = sessionDuration * 60;
     setIsRunning(true);
     setIsPaused(false);
-    setTimeRemaining(SESSION_DURATION);
+    setTimeRemaining(durationInSeconds);
+    setTotalSessionTime(durationInSeconds);
     setSessionResults([]);
     loadNextProblem();
 
@@ -121,7 +125,7 @@ export default function PracticePage() {
       const session: SessionStats = {
         id: Date.now().toString(),
         date: new Date().toISOString(),
-        duration: SESSION_DURATION - timeRemaining,
+        duration: totalSessionTime - timeRemaining,
         problemsAttempted: sessionResults.length,
         problemsCorrect: correct,
         accuracy: Math.round((correct / sessionResults.length) * 100),
@@ -141,7 +145,7 @@ export default function PracticePage() {
         }
       }
     }
-  }, [sessionResults, timeRemaining, user]);
+  }, [sessionResults, timeRemaining, totalSessionTime, user]);
 
   const submitAnswer = async () => {
     if (!currentProblem || showResult) return;
@@ -190,12 +194,6 @@ export default function PracticePage() {
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
   const currentAccuracy = sessionResults.length > 0
     ? Math.round((sessionResults.filter((r) => r.isCorrect).length / sessionResults.length) * 100)
     : 0;
@@ -217,12 +215,17 @@ export default function PracticePage() {
               <CardTitle className="text-2xl text-center">Start Practice Session</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
+              <DurationSelector
+                selectedDuration={sessionDuration}
+                onSelect={setSessionDuration}
+              />
+
               <div>
-                <label className="text-sm text-slate-500 dark:text-slate-400 mb-2 block">Focus Category (optional)</label>
+                <label className="text-sm text-slate-500 dark:text-slate-400 mb-2 block text-center">Focus Category (optional)</label>
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value as ProblemCategory | 'all')}
-                  className="w-full bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 rounded-md p-2 text-slate-900 dark:text-white"
+                  className="w-full bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 rounded-xl p-3 text-slate-900 dark:text-white"
                 >
                   <option value="all">All Categories (Random Mix)</option>
                   {getAllCategories().map((cat) => (
@@ -233,18 +236,16 @@ export default function PracticePage() {
                 </select>
               </div>
 
-              <div className="text-center space-y-4">
-                <p className="text-slate-500 dark:text-slate-400">
-                  30-minute session with randomized problems.
-                  <br />
+              <div className="text-center space-y-4 pt-2">
+                <p className="text-slate-500 dark:text-slate-400 text-sm">
                   Focus on accuracy first, speed will follow.
                 </p>
                 <Button
                   onClick={startSession}
                   size="lg"
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-lg px-8"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-lg px-12 py-6 rounded-xl shadow-lg shadow-emerald-500/25"
                 >
-                  Start Session
+                  Start {sessionDuration} Min Session
                 </Button>
               </div>
             </CardContent>
@@ -341,9 +342,11 @@ export default function PracticePage() {
         {/* Timer and stats bar */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className={`text-2xl font-mono font-bold ${timeRemaining < 60 ? 'text-red-600 dark:text-red-400' : ''}`}>
-              {formatTime(timeRemaining)}
-            </div>
+            <StopwatchTimer
+              timeRemaining={timeRemaining}
+              totalTime={totalSessionTime}
+              isWarning={timeRemaining < 60}
+            />
             <Button
               variant="ghost"
               size="sm"
@@ -353,21 +356,21 @@ export default function PracticePage() {
               {isPaused ? '▶ Resume' : '⏸ Pause'}
             </Button>
           </div>
-          <div className="flex items-center gap-4">
-            <Badge variant="outline" className="text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600">
-              {sessionResults.length} answered
-            </Badge>
-            <Badge
-              variant="outline"
-              className={`border-slate-300 dark:border-slate-600 ${currentAccuracy >= 80 ? 'text-emerald-600 dark:text-emerald-400' : currentAccuracy >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`}
-            >
-              {currentAccuracy}% accuracy
-            </Badge>
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex items-center gap-3">
+              <Badge variant="outline" className="text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600">
+                {sessionResults.length} answered
+              </Badge>
+              <Badge
+                variant="outline"
+                className={`border-slate-300 dark:border-slate-600 ${currentAccuracy >= 80 ? 'text-emerald-600 dark:text-emerald-400' : currentAccuracy >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'}`}
+              >
+                {currentAccuracy}% accuracy
+              </Badge>
+            </div>
             <ThemeToggle />
           </div>
         </div>
-
-        <Progress value={(1 - timeRemaining / SESSION_DURATION) * 100} className="h-2" />
 
         {/* Paused overlay */}
         {isPaused && (
