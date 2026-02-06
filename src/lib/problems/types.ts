@@ -18,7 +18,8 @@ export type ProblemCategory =
   | 'turn-radius'
   | 'true-airspeed'
   | 'time-speed-distance'
-  | 'descent-planning';
+  | 'descent-planning'
+  | 'visual-descent-point';
 
 export interface Problem {
   id: string;
@@ -373,6 +374,21 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
       ],
       answer: 'Begin descent 90 NM out',
       tip: 'The 3-to-1 gives ~3° descent path. Add 10 NM for deceleration on jets.'
+    }
+  },
+  'visual-descent-point': {
+    name: 'Visual Descent Point',
+    description: 'Calculate VDP distance or timing for non-precision approaches',
+    formula: 'VDP DME = (HAT ÷ 300) + Threshold DME | VDP Time = Approach Time - (HAT ÷ 10)',
+    example: {
+      problem: 'MDA HAT is 400 ft, threshold at 1.5 DME. What is the VDP?',
+      steps: [
+        { step: 'HAT ÷ 300 = 400 ÷ 300', explanation: 'Distance needed for 3° descent (300 ft/NM)' },
+        { step: '400 ÷ 300 = 1.3 NM', explanation: 'Distance from threshold to begin descent' },
+        { step: '1.3 + 1.5 = 2.8 DME', explanation: 'Add threshold DME' }
+      ],
+      answer: '2.8 DME',
+      tip: 'For timing method: HAT ÷ 10 = seconds before MAP (assumes 600 fpm descent rate)'
     }
   }
 };

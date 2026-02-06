@@ -642,6 +642,67 @@ function generateDescentPlanning(): Problem {
 }
 
 // ============================================
+// VISUAL DESCENT POINT
+// ============================================
+
+function generateVisualDescentPoint(): Problem {
+  const questionType = pick(['dme', 'timing']);
+
+  if (questionType === 'dme') {
+    // HAT values typically between 300 and 600 feet
+    const hatValues = [300, 350, 390, 400, 450, 480, 500, 550, 600];
+    const hat = pick(hatValues);
+    // Threshold DME typically between 1 and 3 NM
+    const thresholdDMEs = [1.0, 1.2, 1.5, 1.6, 1.8, 2.0, 2.2, 2.5];
+    const thresholdDME = pick(thresholdDMEs);
+
+    // VDP = (HAT / 300) + Threshold DME
+    // 300 ft/NM is the standard 3° glidepath
+    const descentDistance = hat / 300;
+    const vdpDME = descentDistance + thresholdDME;
+
+    return {
+      id: generateId(),
+      category: 'visual-descent-point',
+      question: `MDA HAT is ${hat} ft, runway threshold at ${thresholdDME} DME. What is the VDP?`,
+      correctAnswer: Math.round(vdpDME * 10) / 10,
+      tolerance: 0.2,
+      unit: 'DME',
+      hint: 'VDP = (HAT ÷ 300) + Threshold DME',
+      explanation: `HAT ${hat} ÷ 300 = ${(hat/300).toFixed(2)} NM descent distance. Add threshold ${thresholdDME} DME = ${vdpDME.toFixed(1)} DME`
+    };
+  } else {
+    // Timing method: Time = Approach Time - (HAT / 10)
+    const hatValues = [300, 350, 400, 450, 500];
+    const hat = pick(hatValues);
+    // Approach timing in seconds (from FAF to MAP)
+    const approachTimings = [120, 135, 150, 165, 180, 195, 210];
+    const approachTime = pick(approachTimings);
+
+    // HAT / 10 gives seconds needed at 600 fpm descent
+    const descentTime = hat / 10;
+    const vdpTime = approachTime - descentTime;
+
+    const formatTime = (seconds: number) => {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    return {
+      id: generateId(),
+      category: 'visual-descent-point',
+      question: `HAT is ${hat} ft, approach timing is ${formatTime(approachTime)}. At what time from FAF is the VDP?`,
+      correctAnswer: Math.round(vdpTime),
+      tolerance: 5,
+      unit: 'seconds',
+      hint: 'VDP Time = Approach Time - (HAT ÷ 10)',
+      explanation: `HAT ${hat} ÷ 10 = ${descentTime} sec descent time. ${formatTime(approachTime)} - ${descentTime} sec = ${formatTime(vdpTime)} (${vdpTime} sec)`
+    };
+  }
+}
+
+// ============================================
 // MAIN GENERATOR
 // ============================================
 
@@ -666,6 +727,7 @@ const generators: Record<ProblemCategory, () => Problem> = {
   'true-airspeed': generateTrueAirspeed,
   'time-speed-distance': generateTimeSpeedDistance,
   'descent-planning': generateDescentPlanning,
+  'visual-descent-point': generateVisualDescentPoint,
 };
 
 export function generateProblem(category?: ProblemCategory): Problem {

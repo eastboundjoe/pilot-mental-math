@@ -26,7 +26,7 @@ export default function ReferencePage() {
     'Navigation & Heading': ['reciprocal-heading', 'magnetic-compass', 'drift-angle', 'sixty-to-one'],
     'Wind & Components': ['crosswind', 'headwind-tailwind'],
     'Speed & Distance': ['time-speed-distance', 'true-airspeed', 'turn-radius', 'standard-rate-turn', 'unit-conversion'],
-    'Altitude & Descent': ['pressure-altitude', 'descent-planning', 'isa-deviation'],
+    'Altitude & Descent': ['pressure-altitude', 'descent-planning', 'visual-descent-point', 'isa-deviation'],
     'Temperature': ['temp-conversion'],
     'Fuel': ['fuel-weight', 'fuel-dumping'],
     'Safety & Performance': ['hydroplaning', 'visibility-rvr'],
