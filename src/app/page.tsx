@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { HeatmapCalendar } from '@/components/heatmap-calendar';
 import { TimingBreakdown } from '@/components/timing-breakdown';
+import { MissedProblems } from '@/components/missed-problems';
 import { AuthModal } from '@/components/auth-modal';
 import { useAuth } from '@/components/auth-provider';
 import {
@@ -20,6 +21,7 @@ import {
   getPracticeCalendar,
   getTotalDaysPracticed,
   getWeakCategories,
+  getMissedByCategory,
   CalendarDay,
   CategoryTimingStats,
 } from '@/lib/storage';
@@ -45,6 +47,7 @@ export default function HomePage() {
   const [calendarData, setCalendarData] = useState<CalendarDay[]>([]);
   const [totalDaysPracticed, setTotalDaysPracticed] = useState(0);
   const [weakCategories, setWeakCategories] = useState<ProblemCategory[]>([]);
+  const [missedByCategory, setMissedByCategory] = useState<Record<ProblemCategory, { missed: number; total: number; rate: number }>>({} as Record<ProblemCategory, { missed: number; total: number; rate: number }>);
 
   // Load data from localStorage (guest mode)
   const loadLocalData = useCallback(() => {
@@ -55,6 +58,7 @@ export default function HomePage() {
     setCalendarData(getPracticeCalendar(365));
     setTotalDaysPracticed(getTotalDaysPracticed());
     setWeakCategories(getWeakCategories(5));
+    setMissedByCategory(getMissedByCategory());
     setRecentSessions(
       getRecentSessions(5).map((s) => ({
         date: new Date(s.date).toLocaleDateString(),
@@ -146,6 +150,18 @@ export default function HomePage() {
           .slice(0, 5)
           .map(([cat]) => cat as ProblemCategory);
         setWeakCategories(weak);
+
+        // Missed by category
+        const missedStats: Record<string, { missed: number; total: number; rate: number }> = {};
+        for (const [cat, data] of Object.entries(formattedCatStats)) {
+          const missed = data.attempted - data.correct;
+          missedStats[cat] = {
+            missed,
+            total: data.attempted,
+            rate: data.attempted > 0 ? Math.round((missed / data.attempted) * 100) : 0,
+          };
+        }
+        setMissedByCategory(missedStats as Record<ProblemCategory, { missed: number; total: number; rate: number }>);
       }
 
       // Sessions for recent and calendar
@@ -416,6 +432,23 @@ export default function HomePage() {
             </CardHeader>
             <CardContent>
               <TimingBreakdown timingStats={timingStats} />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Most Missed Problems */}
+        {stats.totalProblems > 0 && Object.keys(missedByCategory).length > 0 && (
+          <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-red-500">
+                  <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-1.72 6.97a.75.75 0 10-1.06 1.06L10.94 12l-1.72 1.72a.75.75 0 101.06 1.06L12 13.06l1.72 1.72a.75.75 0 101.06-1.06L13.06 12l1.72-1.72a.75.75 0 10-1.06-1.06L12 10.94l-1.72-1.72z" clipRule="evenodd" />
+                </svg>
+                Miss Rate by Category
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <MissedProblems missedByCategory={missedByCategory} />
             </CardContent>
           </Card>
         )}

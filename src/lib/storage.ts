@@ -283,6 +283,56 @@ export function getTotalDaysPracticed(): number {
 }
 
 // ============================================
+// MISSED PROBLEMS ANALYSIS
+// ============================================
+
+export interface MissedProblemInfo {
+  category: ProblemCategory;
+  correctAnswer: number;
+  userAnswer: number | null;
+  timestamp: number;
+}
+
+export function getRecentMissedProblems(limit: number = 20): MissedProblemInfo[] {
+  const results = getResults();
+  return results
+    .filter(r => !r.isCorrect)
+    .slice(-limit)
+    .reverse()
+    .map(r => ({
+      category: r.category,
+      correctAnswer: r.correctAnswer,
+      userAnswer: r.userAnswer,
+      timestamp: r.timestamp,
+    }));
+}
+
+export function getMissedByCategory(): Record<ProblemCategory, { missed: number; total: number; rate: number }> {
+  const results = getResults();
+  const stats: Record<string, { missed: number; total: number }> = {};
+
+  for (const result of results) {
+    if (!stats[result.category]) {
+      stats[result.category] = { missed: 0, total: 0 };
+    }
+    stats[result.category].total++;
+    if (!result.isCorrect) {
+      stats[result.category].missed++;
+    }
+  }
+
+  const output: Record<string, { missed: number; total: number; rate: number }> = {};
+  for (const [category, data] of Object.entries(stats)) {
+    output[category] = {
+      ...data,
+      rate: data.total > 0 ? Math.round((data.missed / data.total) * 100) : 0,
+    };
+  }
+
+  return output as Record<ProblemCategory, { missed: number; total: number; rate: number }>;
+}
+
+// ============================================
 // STREAK TRACKING
 // ============================================
 

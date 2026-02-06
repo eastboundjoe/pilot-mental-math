@@ -99,21 +99,22 @@ export function HeatmapCalendar({ data, totalDays }: HeatmapCalendarProps) {
         </div>
       </div>
 
-      {/* Month Labels */}
-      <div className="flex mb-1 text-xs text-slate-500 dark:text-slate-400">
-        {monthLabels.map((label, idx) => (
-          <div
-            key={idx}
-            className="absolute"
-            style={{ left: `${label.weekIndex * 14 + 20}px` }}
-          >
-            {label.month}
-          </div>
-        ))}
-      </div>
+      {/* Heatmap Grid with Month Labels */}
+      <div className="overflow-x-auto pb-2">
+        {/* Month Labels - inline with scroll */}
+        <div className="flex gap-[3px] ml-8 mb-1 text-xs text-slate-500 dark:text-slate-400" style={{ minWidth: 'max-content' }}>
+          {weeks.map((week, weekIndex) => {
+            const label = monthLabels.find(l => l.weekIndex === weekIndex);
+            return (
+              <div key={weekIndex} className="w-[12px] text-center" style={{ fontSize: '9px' }}>
+                {label ? label.month.split(' ')[0] : ''}
+              </div>
+            );
+          })}
+        </div>
 
-      {/* Heatmap Grid */}
-      <div className="flex gap-[3px] mt-6 overflow-x-auto pb-2">
+        {/* Grid */}
+        <div className="flex gap-[3px]" style={{ minWidth: 'max-content' }}>
         {/* Day labels */}
         <div className="flex flex-col gap-[3px] text-xs text-slate-500 dark:text-slate-400 mr-2">
           <div className="h-[12px]"></div>
@@ -128,7 +129,7 @@ export function HeatmapCalendar({ data, totalDays }: HeatmapCalendarProps) {
         {/* Week columns */}
         {weeks.map((week, weekIndex) => (
           <div key={weekIndex} className="flex flex-col gap-[3px]">
-            {week.map((day, dayIndex) => (
+            {week.map((day) => (
               <div
                 key={day.date}
                 className={`w-[12px] h-[12px] rounded-sm cursor-pointer transition-all hover:ring-2 hover:ring-emerald-400 dark:hover:ring-emerald-500 ${getLightColor(day.problemsAttempted)} dark:${getColor(day.problemsAttempted)}`}
@@ -138,6 +139,7 @@ export function HeatmapCalendar({ data, totalDays }: HeatmapCalendarProps) {
             ))}
           </div>
         ))}
+        </div>
       </div>
 
       {/* Tooltip */}
