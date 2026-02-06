@@ -222,7 +222,8 @@ export function getPracticeCalendar(daysBack: number = 365): CalendarDay[] {
   const calendar: CalendarDay[] = [];
   const today = new Date();
 
-  for (let i = daysBack - 1; i >= 0; i--) {
+  // Build calendar from today backwards (today first, oldest last)
+  for (let i = 0; i < daysBack; i++) {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
     const dateKey = date.toISOString().split('T')[0];

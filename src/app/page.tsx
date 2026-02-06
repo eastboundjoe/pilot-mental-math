@@ -171,7 +171,8 @@ export default function HomePage() {
 
         const calendar: CalendarDay[] = [];
         const today = new Date();
-        for (let i = 364; i >= 0; i--) {
+        // Build calendar from today backwards (today first, oldest last)
+        for (let i = 0; i < 365; i++) {
           const date = new Date(today);
           date.setDate(date.getDate() - i);
           const dateKey = date.toISOString().split('T')[0];
@@ -297,7 +298,7 @@ export default function HomePage() {
           <CardContent className="p-8 text-center space-y-4">
             <h2 className="text-2xl font-semibold">Ready to practice?</h2>
             <p className="text-slate-600 dark:text-slate-300">
-              30-minute sessions with randomized problems from the book.
+              Practice sessions with randomized problems from the book.
             </p>
             <Link href="/practice">
               <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white text-lg px-8">

@@ -47,6 +47,7 @@ export default function PracticePage() {
 
   // Session end modal
   const [showSummary, setShowSummary] = useState(false);
+  const [sessionEnded, setSessionEnded] = useState(false);
 
   // Hint visibility
   const [showHint, setShowHint] = useState(false);
@@ -89,6 +90,7 @@ export default function PracticePage() {
     setTimeRemaining(durationInSeconds);
     setTotalSessionTime(durationInSeconds);
     setSessionResults([]);
+    setSessionEnded(false);
     loadNextProblem();
 
     // Update streak (local and cloud)
@@ -103,6 +105,10 @@ export default function PracticePage() {
   };
 
   const endSession = useCallback(async () => {
+    // Prevent double-saving (React strict mode or rapid clicks)
+    if (sessionEnded) return;
+    setSessionEnded(true);
+
     setIsRunning(false);
     setShowSummary(true);
 
@@ -133,19 +139,20 @@ export default function PracticePage() {
         categoryBreakdown,
       };
 
-      // Save locally
-      saveSession(session);
-
-      // Save to cloud if logged in
+      // Save to cloud if logged in, otherwise save locally
       if (user) {
         try {
           await saveSessionToCloud(user.id, session);
         } catch (error) {
           console.error('Error saving session to cloud:', error);
+          // Fallback to local save if cloud fails
+          saveSession(session);
         }
+      } else {
+        saveSession(session);
       }
     }
-  }, [sessionResults, timeRemaining, totalSessionTime, user]);
+  }, [sessionResults, timeRemaining, totalSessionTime, user, sessionEnded]);
 
   const submitAnswer = async () => {
     if (!currentProblem || showResult) return;
@@ -171,16 +178,17 @@ export default function PracticePage() {
 
     setSessionResults((prev) => [...prev, result]);
 
-    // Save locally
-    saveResult(result);
-
-    // Save to cloud if logged in
+    // Save to cloud if logged in, otherwise save locally
     if (user) {
       try {
         await saveResultToCloud(user.id, result);
       } catch (error) {
         console.error('Error saving result to cloud:', error);
+        // Fallback to local save if cloud fails
+        saveResult(result);
       }
+    } else {
+      saveResult(result);
     }
   };
 

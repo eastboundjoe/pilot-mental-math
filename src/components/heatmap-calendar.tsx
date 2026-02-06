@@ -36,7 +36,7 @@ export function HeatmapCalendar({ data, totalDays }: HeatmapCalendarProps) {
     weeks.push(data.slice(i, i + 7));
   }
 
-  // Get month labels
+  // Get month labels (data is now today-first, so months go backwards)
   const getMonthLabels = () => {
     const labels: { month: string; weekIndex: number }[] = [];
     let lastMonth = '';
@@ -44,10 +44,12 @@ export function HeatmapCalendar({ data, totalDays }: HeatmapCalendarProps) {
     data.forEach((day, index) => {
       const date = new Date(day.date);
       const month = date.toLocaleString('default', { month: 'short' });
+      const year = date.getFullYear().toString().slice(-2);
       const weekIndex = Math.floor(index / 7);
+      const monthYear = `${month} '${year}`;
 
       if (month !== lastMonth) {
-        labels.push({ month, weekIndex });
+        labels.push({ month: monthYear, weekIndex });
         lastMonth = month;
       }
     });
