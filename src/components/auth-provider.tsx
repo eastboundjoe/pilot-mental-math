@@ -24,12 +24,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const supabase = getSupabase();
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    // Get initial session with timeout
+    const timeoutId = setTimeout(() => {
+      // If auth takes too long, proceed without auth (guest mode)
+      console.warn('Auth timeout - proceeding in guest mode');
       setLoading(false);
-    });
+    }, 5000); // 5 second timeout
+
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        clearTimeout(timeoutId);
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      })
+      .catch((error) => {
+        clearTimeout(timeoutId);
+        console.error('Auth error:', error);
+        setLoading(false); // Proceed in guest mode on error
+      });
 
     // Listen for auth changes
     const {
@@ -40,7 +53,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(timeoutId);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signInWithPassword = async (email: string, password: string) => {

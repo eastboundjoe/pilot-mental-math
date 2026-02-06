@@ -71,11 +71,14 @@ export default function HomePage() {
   // Load data from cloud (logged in)
   const loadCloudData = useCallback(async (userId: string) => {
     try {
-      // Check for local data to migrate
-      const localSessions = localStorage.getItem('pilot-math-sessions');
-      const localResults = localStorage.getItem('pilot-math-results');
+      // Check for local data to migrate (only if there's actual data, not empty arrays)
+      const localSessionsRaw = localStorage.getItem('pilot-math-sessions');
+      const localResultsRaw = localStorage.getItem('pilot-math-results');
 
-      if (localSessions || localResults) {
+      const hasLocalSessions = localSessionsRaw && JSON.parse(localSessionsRaw).length > 0;
+      const hasLocalResults = localResultsRaw && JSON.parse(localResultsRaw).length > 0;
+
+      if (hasLocalSessions || hasLocalResults) {
         setMigrating(true);
         const { sessions, results } = await migrateLocalDataToCloud(userId);
         if (sessions > 0 || results > 0) {
@@ -83,6 +86,10 @@ export default function HomePage() {
           setTimeout(() => setMigrationMessage(null), 5000);
         }
         setMigrating(false);
+      } else if (localSessionsRaw || localResultsRaw) {
+        // Clean up empty arrays from localStorage
+        localStorage.removeItem('pilot-math-sessions');
+        localStorage.removeItem('pilot-math-results');
       }
 
       // Load from cloud

@@ -74,7 +74,7 @@ export interface CategoryInfo {
 
 export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
   'hours-to-decimal': {
-    name: 'Hours to Decimal',
+    name: '⏱️ Hours to Decimal',
     description: 'Convert time in hours:minutes to decimal hours',
     formula: 'Every 6 minutes = 0.1 hour (e.g., 1:15 = 1.25 hours)',
     example: {
@@ -90,7 +90,7 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
     }
   },
   'reciprocal-heading': {
-    name: 'Reciprocal Heading',
+    name: '🧭 Reciprocal Heading',
     description: 'Calculate the opposite heading (180° difference)',
     formula: 'If heading < 180°: Add 200, subtract 20. If heading > 180°: Subtract 200, add 20',
     example: {
@@ -105,7 +105,7 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
     }
   },
   'hydroplaning': {
-    name: 'Hydroplaning Speed',
+    name: '🌊 Hydroplaning Speed',
     description: 'Calculate minimum hydroplaning speed',
     formula: 'V = 9 × √(tire pressure in psi)',
     example: {
@@ -120,7 +120,7 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
     }
   },
   'temp-conversion': {
-    name: 'Temperature Conversion',
+    name: '🌡️ Temperature Conversion',
     description: 'Convert between Fahrenheit and Celsius',
     formula: '°F = (°C × 2) - 10% + 32  |  °C = (°F - 32 + 10%) ÷ 2',
     example: {
@@ -136,7 +136,7 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
     }
   },
   'isa-deviation': {
-    name: 'ISA Temperature',
+    name: '📊 ISA Temperature',
     description: 'Calculate ISA temperature and deviation',
     formula: 'ISA = 15°C - (altitude in 1000s × 2). Deviation = Actual - ISA',
     example: {
@@ -153,7 +153,7 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
     }
   },
   'pressure-altitude': {
-    name: 'Pressure Altitude',
+    name: '📏 Pressure Altitude',
     description: 'Calculate pressure altitude from altimeter setting',
     formula: 'For each 0.01" Hg difference from 29.92: ±10 feet',
     example: {
@@ -170,7 +170,7 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
     }
   },
   'crosswind': {
-    name: 'Crosswind Component',
+    name: '💨 Crosswind Component',
     description: 'Calculate crosswind from wind angle',
     formula: '30° = 50%, 45° = 70%, 60° = 90%, 90° = 100% of wind speed',
     example: {
@@ -186,7 +186,7 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
     }
   },
   'headwind-tailwind': {
-    name: 'Headwind/Tailwind',
+    name: '🎯 Headwind/Tailwind',
     description: 'Calculate headwind or tailwind component',
     formula: '0° = 100%, 30° = 90%, 45° = 70%, 60° = 50%, 90° = 0% of wind speed',
     example: {
@@ -202,7 +202,7 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
     }
   },
   'drift-angle': {
-    name: 'Drift Angle',
+    name: '↗️ Drift Angle',
     description: 'Calculate drift angle from crosswind',
     formula: 'Drift = (Crosswind × 60) ÷ TAS. Or: 1° per (TAS÷60) knots of crosswind',
     example: {
@@ -217,7 +217,7 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
     }
   },
   'unit-conversion': {
-    name: 'Unit Conversion',
+    name: '🔄 Unit Conversion',
     description: 'Convert between nautical/statute miles, knots/mph',
     formula: '1 NM = 1.15 SM, 1 Knot = 1.15 MPH, 60 knots = 1 NM/min',
     example: {
@@ -231,7 +231,7 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
     }
   },
   'visibility-rvr': {
-    name: 'Visibility to RVR',
+    name: '👁️ Visibility to RVR',
     description: 'Convert visibility (SM) to runway visual range (feet)',
     formula: '1/4 SM = 1600ft, 1/2 SM = 2400ft, 3/4 SM = 4000ft, 1 SM = 5000ft',
     example: {
@@ -245,7 +245,7 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
     }
   },
   'fuel-weight': {
-    name: 'Fuel Weight',
+    name: '⛽ Fuel Weight',
     description: 'Convert between gallons and pounds of fuel',
     formula: 'Avgas: 6.0 lbs/gal | Jet A: 6.7 lbs/gal',
     example: {
@@ -259,7 +259,7 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
     }
   },
   'fuel-dumping': {
-    name: 'Fuel Dumping',
+    name: '🚿 Fuel Dumping',
     description: 'Calculate fuel dump time or amount',
     formula: 'Time = Fuel ÷ Dump Rate  |  Fuel = Dump Rate × Time',
     example: {
@@ -273,7 +273,7 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
     }
   },
   'magnetic-compass': {
-    name: 'Magnetic Compass',
+    name: '🧲 Magnetic Compass',
     description: 'Compass error corrections for turns',
     formula: 'UNOS: Undershoot North, Overshoot South. Add latitude to lead/lag.',
     example: {
@@ -289,7 +289,7 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
     }
   },
   'sixty-to-one': {
-    name: '60-to-1 Rule',
+    name: '📐 60-to-1 Rule',
     description: 'Calculate arc distance or radials crossed',
     formula: 'At 60 NM: 1° = 1 NM. Radials per mile = 60 ÷ DME',
     example: {
@@ -304,7 +304,7 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
     }
   },
   'standard-rate-turn': {
-    name: 'Standard Rate Turn',
+    name: '🔃 Standard Rate Turn',
     description: 'Calculate bank angle for 3°/sec turn',
     formula: 'Bank Angle = (TAS ÷ 10) × 1.5 (max 30° for IFR)',
     example: {
@@ -318,7 +318,7 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
     }
   },
   'turn-radius': {
-    name: 'Turn Radius',
+    name: '⭕ Turn Radius',
     description: 'Calculate turn radius in nautical miles',
     formula: 'Turn Radius = TAS ÷ 200  |  Or: (Mach × 10) - 2 at high speed',
     example: {
@@ -332,7 +332,7 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
     }
   },
   'true-airspeed': {
-    name: 'True Airspeed',
+    name: '✈️ True Airspeed',
     description: 'Calculate TAS from IAS and altitude',
     formula: 'TAS = IAS + (IAS × Altitude in 1000s × 2%)',
     example: {
@@ -348,7 +348,7 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
     }
   },
   'time-speed-distance': {
-    name: 'Time-Speed-Distance',
+    name: '🏎️ Time-Speed-Distance',
     description: 'Calculate time, speed, or distance',
     formula: 'Distance = Ground Speed × Time. 60 knots = 1 NM/min',
     example: {
@@ -362,7 +362,7 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
     }
   },
   'descent-planning': {
-    name: 'Descent Planning',
+    name: '📉 Descent Planning',
     description: 'Calculate top of descent distance',
     formula: '3-to-1 Rule: Distance = Altitude to lose (in 1000s) × 3',
     example: {
@@ -377,7 +377,7 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
     }
   },
   'visual-descent-point': {
-    name: 'Visual Descent Point',
+    name: '🛬 Visual Descent Point',
     description: 'Calculate VDP distance or timing for non-precision approaches',
     formula: 'VDP DME = (HAT ÷ 300) + Threshold DME | VDP Time = Approach Time - (HAT ÷ 10)',
     example: {
