@@ -230,18 +230,21 @@ export default function ReferencePage() {
           {/* Speed to NM/min */}
           <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800">
             <CardHeader>
-              <CardTitle>Ground Speed to NM per Minute</CardTitle>
+              <CardTitle>Speed to Distance (NM per Minute)</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-5 gap-2 text-sm">
-                {[60, 90, 120, 150, 180, 210, 240, 300, 360, 480].map((speed) => (
-                  <div key={speed} className="bg-slate-100 dark:bg-slate-800 p-2 rounded text-center">
-                    <span className="text-slate-500 dark:text-slate-400">{speed} kts = </span>
-                    <span className="font-mono">{speed / 60}</span>
-                    <span className="text-slate-500 dark:text-slate-400"> NM/min</span>
+              <div className="grid grid-cols-5 gap-3 text-sm">
+                {[
+                  [60, 1], [120, 2], [180, 3], [240, 4], [300, 5],
+                ].map(([speed, nm]) => (
+                  <div key={speed} className="bg-slate-100 dark:bg-slate-800 p-3 rounded text-center">
+                    <div className="text-lg font-mono font-semibold text-blue-600 dark:text-blue-400">{speed} kts</div>
+                    <div className="text-slate-500 dark:text-slate-400">=</div>
+                    <div className="text-xl font-mono font-bold text-emerald-600 dark:text-emerald-400">{nm} NM/min</div>
                   </div>
                 ))}
               </div>
+              <p className="text-slate-500 text-xs mt-3">Pattern: Divide ground speed by 60 to get NM per minute. Easy to remember: 60 kts = 1 mile per minute!</p>
             </CardContent>
           </Card>
 
