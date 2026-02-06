@@ -22,7 +22,9 @@ export type ProblemCategory =
   | 'visual-descent-point'
   | 'glide-distance'
   | 'cloud-base'
-  | 'holding-pattern';
+  | 'holding-pattern'
+  | 'fuel-endurance'
+  | 'slant-range';
 
 export interface Problem {
   id: string;
@@ -436,6 +438,36 @@ export const CATEGORY_INFO: Record<ProblemCategory, CategoryInfo> = {
       ],
       answer: '198° outbound heading',
       tip: 'The 3× rule compensates for wind during both turns plus the outbound leg. Inbound always gets 1× WCA.'
+    }
+  },
+  'fuel-endurance': {
+    name: '⏳ Fuel Endurance',
+    description: 'Calculate fuel required with reserves or flight endurance',
+    formula: 'VFR Day: +30 min | VFR Night: +45 min | IFR: +45 min + alternate. Fuel = Flow × Time',
+    example: {
+      problem: 'VFR day flight of 3:20, fuel burn 10 gph. How many gallons needed?',
+      steps: [
+        { step: 'Flight time = 3:20 = 3.33 hrs', explanation: 'Convert to decimal hours' },
+        { step: 'Add VFR day reserve: +0.5 hrs', explanation: '30 minutes reserve required' },
+        { step: 'Total time = 3.33 + 0.5 = 3.83 hrs', explanation: 'Flight + reserve' },
+        { step: '3.83 × 10 gph = 38.3 gallons', explanation: 'Multiply by fuel flow' }
+      ],
+      answer: '38.3 gallons',
+      tip: 'IFR requires 45 min reserve PLUS fuel to alternate. VFR night requires 45 min reserve.'
+    }
+  },
+  'slant-range': {
+    name: '📡 Slant Range DME',
+    description: 'Calculate DME indication based on altitude and position',
+    formula: 'DME over station = Altitude (ft) ÷ 6,000. At distance, use Pythagorean theorem.',
+    example: {
+      problem: 'Directly over a VOR at FL180. What does the DME read?',
+      steps: [
+        { step: 'FL180 = 18,000 ft', explanation: 'Convert flight level to feet' },
+        { step: '18,000 ÷ 6,000 = 3', explanation: '6,000 ft ≈ 1 NM vertically' }
+      ],
+      answer: '3 DME',
+      tip: 'DME shows slant range (diagonal), not ground distance. This matters most when close to the station at high altitude.'
     }
   }
 };

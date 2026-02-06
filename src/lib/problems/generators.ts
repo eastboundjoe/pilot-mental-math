@@ -599,7 +599,7 @@ function generateTimeSpeedDistance(): Problem {
 }
 
 function generateDescentPlanning(): Problem {
-  const questionType = pick(['distance', 'top-of-descent', 'descent-rate'] as const);
+  const questionType = pick(['distance', 'top-of-descent', 'descent-rate', 'pitch-angle', 'altitude-at-distance'] as const);
 
   if (questionType === 'distance') {
     const altitudesToLose = [6, 8, 10, 12, 15, 18, 20, 24, 30];
@@ -638,7 +638,7 @@ function generateDescentPlanning(): Problem {
       hint: '3-to-1: Distance = Altitude (1000s) × 3, then add restriction DME',
       explanation: `Lose ${altToLose}K ft × 3 = ${descentDistance} NM. Start at ${restrictionDME} + ${descentDistance} = ${topOfDescent} DME`
     };
-  } else {
+  } else if (questionType === 'descent-rate') {
     // Descent Rate: Ground Speed × 5 = FPM for 3° descent
     const groundSpeeds = [100, 120, 140, 150, 160, 180, 200, 220, 240, 280, 300];
     const gs = pick(groundSpeeds);
@@ -653,6 +653,55 @@ function generateDescentPlanning(): Problem {
       unit: 'fpm',
       hint: 'Descent Rate = Ground Speed × 5',
       explanation: `${gs} kts × 5 = ${descentRate} fpm`
+    };
+  } else if (questionType === 'pitch-angle') {
+    // Pitch angle = Altitude (ft) / (Distance × 100)
+    const scenarios: { alt: number; dist: number }[] = [
+      { alt: 5000, dist: 10 },
+      { alt: 4000, dist: 20 },
+      { alt: 7000, dist: 28 },
+      { alt: 6000, dist: 20 },
+      { alt: 8000, dist: 40 },
+      { alt: 10000, dist: 50 },
+      { alt: 12000, dist: 40 },
+      { alt: 15000, dist: 50 },
+      { alt: 19000, dist: 35 },
+      { alt: 23000, dist: 70 },
+    ];
+    const scenario = pick(scenarios);
+    const pitchAngle = scenario.alt / (scenario.dist * 100);
+
+    return {
+      id: generateId(),
+      category: 'descent-planning',
+      question: `Descend ${scenario.alt.toLocaleString()} ft over ${scenario.dist} NM. What pitch angle is needed?`,
+      correctAnswer: Math.round(pitchAngle * 10) / 10,
+      tolerance: 0.3,
+      unit: '° nose down',
+      hint: 'Pitch = Altitude ÷ (Distance × 100)',
+      explanation: `${scenario.alt.toLocaleString()} ÷ (${scenario.dist} × 100) = ${pitchAngle.toFixed(1)}° nose down`
+    };
+  } else {
+    // Visual approach: What altitude at X distance for 3° glidepath
+    // 300 ft per NM or 333 ft per NM (book uses both)
+    const distances = [3, 4, 5, 6, 8, 10, 12];
+    const distance = pick(distances);
+    const fieldElevations = [0, 500, 1000, 1500, 2000, 3000, 5000];
+    const fieldElev = pick(fieldElevations);
+
+    // Using 300 ft/NM for 3° glidepath
+    const agl = distance * 300;
+    const msl = agl + fieldElev;
+
+    return {
+      id: generateId(),
+      category: 'descent-planning',
+      question: `Visual approach, field elevation ${fieldElev.toLocaleString()}' MSL. What altitude at ${distance} NM for 3° glidepath?`,
+      correctAnswer: Math.round(msl),
+      tolerance: 100,
+      unit: 'ft MSL',
+      hint: '3° glidepath ≈ 300 ft/NM. Altitude = (Distance × 300) + Field Elevation',
+      explanation: `${distance} NM × 300 ft/NM = ${agl}' AGL. ${agl} + ${fieldElev}' = ${msl}' MSL`
     };
   }
 }
@@ -903,6 +952,175 @@ function generateHoldingPattern(): Problem {
 }
 
 // ============================================
+// FUEL ENDURANCE
+// ============================================
+
+function generateFuelEndurance(): Problem {
+  const questionType = pick(['fuel-required', 'endurance', 'enough-fuel', 'ifr-reserve'] as const);
+
+  if (questionType === 'fuel-required') {
+    // VFR day: flight time + 30 min reserve
+    const flightHours = pick([1, 2, 3, 4]);
+    const flightMins = pick([0, 15, 20, 30, 40, 45]);
+    const fuelFlows = [8, 10, 12, 14, 15, 18, 20];
+    const fuelFlow = pick(fuelFlows);
+    const isNight = Math.random() > 0.7;
+
+    const flightTime = flightHours + flightMins / 60;
+    const reserve = isNight ? 0.75 : 0.5; // 45 min night, 30 min day
+    const totalTime = flightTime + reserve;
+    const fuelRequired = totalTime * fuelFlow;
+
+    const flightTimeStr = `${flightHours}:${flightMins.toString().padStart(2, '0')}`;
+
+    return {
+      id: generateId(),
+      category: 'fuel-endurance',
+      question: `VFR ${isNight ? 'night' : 'day'} flight of ${flightTimeStr}, fuel burn ${fuelFlow} gph. How many gallons needed?`,
+      correctAnswer: Math.round(fuelRequired * 10) / 10,
+      tolerance: 1,
+      unit: 'gallons',
+      hint: `VFR ${isNight ? 'night' : 'day'} reserve: ${isNight ? '45' : '30'} minutes`,
+      explanation: `Flight: ${flightTime.toFixed(2)} hrs + ${isNight ? '0.75' : '0.5'} hr reserve = ${totalTime.toFixed(2)} hrs × ${fuelFlow} gph = ${fuelRequired.toFixed(1)} gal`
+    };
+  } else if (questionType === 'endurance') {
+    // How long can you fly with X gallons at Y gph?
+    const fuelOnBoard = pick([30, 40, 50, 60, 75, 80, 100, 120]);
+    const fuelFlows = [8, 10, 12, 14, 15, 18];
+    const fuelFlow = pick(fuelFlows);
+
+    const endurance = fuelOnBoard / fuelFlow;
+    const hours = Math.floor(endurance);
+    const mins = Math.round((endurance - hours) * 60);
+
+    return {
+      id: generateId(),
+      category: 'fuel-endurance',
+      question: `You have ${fuelOnBoard} gallons on board, burning ${fuelFlow} gph. What is your endurance?`,
+      correctAnswer: Math.round(endurance * 100) / 100,
+      tolerance: 0.1,
+      unit: 'hours',
+      hint: 'Endurance = Fuel on board ÷ Fuel flow',
+      explanation: `${fuelOnBoard} gal ÷ ${fuelFlow} gph = ${endurance.toFixed(2)} hrs (${hours}:${mins.toString().padStart(2, '0')})`
+    };
+  } else if (questionType === 'enough-fuel') {
+    // Do you have enough fuel? Return how much extra/short
+    const fuelOnBoard = pick([35, 40, 45, 50, 55, 60]);
+    const flightHours = pick([2, 3, 4]);
+    const flightMins = pick([0, 15, 30, 45]);
+    const fuelFlow = pick([10, 12, 14]);
+
+    const flightTime = flightHours + flightMins / 60;
+    const reserve = 0.5; // VFR day
+    const totalTime = flightTime + reserve;
+    const fuelRequired = totalTime * fuelFlow;
+    const difference = fuelOnBoard - fuelRequired;
+
+    const flightTimeStr = `${flightHours}:${flightMins.toString().padStart(2, '0')}`;
+
+    return {
+      id: generateId(),
+      category: 'fuel-endurance',
+      question: `VFR day, ${fuelOnBoard} gal on board, ${flightTimeStr} flight, ${fuelFlow} gph burn. Extra fuel after reserve?`,
+      correctAnswer: Math.round(difference * 10) / 10,
+      tolerance: 1,
+      unit: 'gallons',
+      hint: 'Calculate fuel required (flight + 30 min reserve), then subtract from fuel on board',
+      explanation: `Need: (${flightTime.toFixed(2)} + 0.5) × ${fuelFlow} = ${fuelRequired.toFixed(1)} gal. Have ${fuelOnBoard}. Extra: ${difference.toFixed(1)} gal`
+    };
+  } else {
+    // IFR: flight time + alternate + 45 min reserve
+    const flightHours = pick([2, 3, 4, 5]);
+    const flightMins = pick([0, 10, 20, 30]);
+    const altMins = pick([15, 20, 25, 30, 35, 40]);
+    const fuelFlowPPH = pick([600, 700, 800, 900, 1000, 1200]);
+
+    const flightTime = flightHours + flightMins / 60;
+    const altTime = altMins / 60;
+    const reserve = 0.75; // 45 minutes
+    const totalTime = flightTime + altTime + reserve;
+    const fuelRequired = totalTime * fuelFlowPPH;
+
+    const flightTimeStr = `${flightHours}:${flightMins.toString().padStart(2, '0')}`;
+    const altTimeStr = `0:${altMins.toString().padStart(2, '0')}`;
+
+    return {
+      id: generateId(),
+      category: 'fuel-endurance',
+      question: `IFR flight ${flightTimeStr}, alternate ${altTimeStr}, fuel flow ${fuelFlowPPH} pph. Pounds of fuel needed?`,
+      correctAnswer: Math.round(fuelRequired),
+      tolerance: 50,
+      unit: 'lbs',
+      hint: 'IFR = Flight + Alternate + 45 min reserve',
+      explanation: `(${flightTime.toFixed(2)} + ${altTime.toFixed(2)} + 0.75) × ${fuelFlowPPH} = ${Math.round(fuelRequired)} lbs`
+    };
+  }
+}
+
+// ============================================
+// SLANT RANGE DME
+// ============================================
+
+function generateSlantRange(): Problem {
+  const questionType = pick(['over-station', 'slant-vs-ground', 'min-altitude'] as const);
+
+  if (questionType === 'over-station') {
+    // Directly over VOR at altitude, what does DME read?
+    const altitudes = [6000, 9000, 12000, 15000, 18000, 21000, 24000, 30000, 36000];
+    const altitude = pick(altitudes);
+    const dme = altitude / 6000;
+
+    return {
+      id: generateId(),
+      category: 'slant-range',
+      question: `Directly over a VOR at ${altitude.toLocaleString()} ft. What does the DME read?`,
+      correctAnswer: Math.round(dme * 10) / 10,
+      tolerance: 0.2,
+      unit: 'DME',
+      hint: 'DME over station = Altitude ÷ 6,000 (6,000 ft ≈ 1 NM)',
+      explanation: `${altitude.toLocaleString()} ft ÷ 6,000 = ${dme.toFixed(1)} NM`
+    };
+  } else if (questionType === 'slant-vs-ground') {
+    // At close range and high altitude, slant range differs from ground distance
+    // Using Pythagorean: Slant² = Ground² + (Alt/6000)²
+    const groundDistances = [3, 4, 5, 6, 8];
+    const ground = pick(groundDistances);
+    const altitudes = [12000, 18000, 24000, 30000];
+    const altitude = pick(altitudes);
+
+    const altNM = altitude / 6000;
+    const slant = Math.sqrt(ground * ground + altNM * altNM);
+
+    return {
+      id: generateId(),
+      category: 'slant-range',
+      question: `At ${altitude.toLocaleString()} ft, ${ground} NM ground distance from VOR. What does DME show?`,
+      correctAnswer: Math.round(slant * 10) / 10,
+      tolerance: 0.3,
+      unit: 'DME',
+      hint: 'Slant² = Ground² + (Altitude÷6000)². Close + high = bigger difference.',
+      explanation: `Alt in NM = ${altNM.toFixed(1)}. Slant = √(${ground}² + ${altNM.toFixed(1)}²) = √${(ground*ground + altNM*altNM).toFixed(1)} = ${slant.toFixed(1)} NM`
+    };
+  } else {
+    // What minimum altitude to show at least X DME when over station?
+    const targetDMEs = [2, 3, 4, 5, 6];
+    const targetDME = pick(targetDMEs);
+    const minAltitude = targetDME * 6000;
+
+    return {
+      id: generateId(),
+      category: 'slant-range',
+      question: `What is the minimum altitude to show at least ${targetDME} DME when directly over the station?`,
+      correctAnswer: minAltitude,
+      tolerance: 100,
+      unit: 'ft',
+      hint: 'Altitude = DME × 6,000',
+      explanation: `${targetDME} NM × 6,000 ft/NM = ${minAltitude.toLocaleString()} ft`
+    };
+  }
+}
+
+// ============================================
 // MAIN GENERATOR
 // ============================================
 
@@ -931,6 +1149,8 @@ const generators: Record<ProblemCategory, () => Problem> = {
   'glide-distance': generateGlideDistance,
   'cloud-base': generateCloudBase,
   'holding-pattern': generateHoldingPattern,
+  'fuel-endurance': generateFuelEndurance,
+  'slant-range': generateSlantRange,
 };
 
 export function generateProblem(category?: ProblemCategory): Problem {
