@@ -8,9 +8,9 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>;
   signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -43,17 +43,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signInWithMagicLink = async (email: string) => {
-    const supabase = getSupabase();
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/`,
-      },
-    });
-    return { error };
-  };
-
   const signInWithPassword = async (email: string, password: string) => {
     const supabase = getSupabase();
     const { error } = await supabase.auth.signInWithPassword({
@@ -75,13 +64,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
+  const signInWithGoogle = async () => {
+    const supabase = getSupabase();
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/`,
+      },
+    });
+    return { error };
+  };
+
   const signOut = async () => {
     const supabase = getSupabase();
     await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signInWithMagicLink, signInWithPassword, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, signInWithPassword, signUp, signInWithGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
   );
